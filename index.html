@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pomodoro — Blocs clone</title>
+  <style>
+    /* ---------- Reset & base ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+
+    /* Center the card in the iframe; works at any size. */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      background: #f5f5f7;            /* Blocs dashboard light gray */
+      color: #111827;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 280px;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 18px 16px 14px;
+      box-shadow:
+        0 1px 0 rgba(0,0,0,0.02),
+        0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    /* ---------- Tabs ---------- */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding: 2px;
+    }
+    .tab {
+      flex: 1;
+      appearance: none;
+      background: transparent;
+      border: 0;
+      padding: 8px 4px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-radius: 10px;
+      position: relative;
+      transition: color .15s ease, background .15s ease;
+    }
+    .tab:hover { color: #374151; }
+    .tab[aria-selected="true"] {
+      color: #111827;
+      font-weight: 600;
+    }
+    /* The little cyan dot under the active tab — matches the Blocs pill */
+    .tab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 2px;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: #06b6d4; /* Blocs teal/cyan */
+    }
+
+    /* ---------- Timer ring ---------- */
+    .ring {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 6px auto 10px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, #ffffff 0 58%, transparent 59%),
+        conic-gradient(#e5e7eb 0deg, #e5e7eb 360deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: filter .2s ease;
+    }
+    /* Progress overlay — updated from JS via --p (0..1) */
+    .ring::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) calc(var(--p,0) * 360deg), transparent 0);
+      -webkit-mask: radial-gradient(circle, transparent 0 58%, #000 59%);
+              mask: radial-gradient(circle, transparent 0 58%, #000 59%);
+    }
+    .ring.running { filter: drop-shadow(0 0 0.5px rgba(0,0,0,0.04)); }
+
+    .display {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      line-height: 1;
+    }
+    .time {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+      font-size: 44px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: #111827;
+    }
+    .mode {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #4b5563;
+    }
+    .mode .dot {
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: var(--accent, #06b6d4);
+    }
+
+    /* ---------- Controls ---------- */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 4px;
+    }
+    .btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s ease, border-color .15s ease, transform .05s ease;
+      color: #111827;
+    }
+    .btn:hover  { background: #f9fafb; border-color: #d1d5db; }
+    .btn:active { transform: scale(0.96); }
+    .btn svg    { width: 16px; height: 16px; display: block; }
+
+    /* ---------- Footer ---------- */
+    .footer {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 10.5px;
+      color: #9ca3af;
+    }
+    .footer a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+
+    /* Compact tweaks when embedded in a very narrow iframe */
+    @media (max-width: 240px) {
+      .ring   { width: 150px; height: 150px; }
+      .time   { font-size: 36px; }
+    }
+
+    /* Subtle red pulse while the alarm is ringing */
+    @keyframes alarm-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.00); }
+      50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0.22); }
+    }
+    .ring.ringing {
+      animation: alarm-pulse 1.1s ease-in-out infinite;
+    }
+    .ring.ringing .mode .dot {
+      background: #ef4444 !important;
+      animation: alarm-pulse 1.1s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="region" aria-label="Pomodoro timer">
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-mode="pomodoro"  aria-selected="true">Pomodoro</button>
+      <button class="tab" role="tab" data-mode="short"     aria-selected="false">Short Break</button>
+      <button class="tab" role="tab" data-mode="long"      aria-selected="false">Long Break</button>
+    </div>
+
+    <!-- Ring + display -->
+    <div class="ring" id="ring" style="--accent:#06b6d4;">
+      <div class="display">
+        <div class="time" id="time">25:00</div>
+        <div class="mode"><span class="dot"></span><span id="modeLabel">work</span></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn" id="playBtn" aria-label="Start">
+        <!-- Play icon -->
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/>
+        </svg>
+      </button>
+      <button class="btn" id="resetBtn" aria-label="Reset">
+        <!-- Stop / reset icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="8"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="footer">
+      <a href="#" id="powered" tabindex="-1">Powered by Your Site</a>
+    </div>
+  </main>
+
+  <script>
+    /* =====================================================================
+       Pomodoro — Blocs clone
+       - Modes: Pomodoro (25:00), Short Break (5:00), Long Break (15:00)
+       - States: idle | running | paused
+       - Switching tab resets the timer to that mode's full duration.
+       - Click Play → start; while running the icon switches to "Pause"
+         and the same button toggles to pause/resume.
+       - Click Reset → stop and revert to current mode's full duration.
+       - When the timer hits 0: beep and stay on the finished mode
+         (you switch manually — that's the Blocs behavior).
+       - Persists last selected mode across reloads (localStorage).
+       ===================================================================== */
+    (function () {
+      const MODES = {
+        pomodoro: { seconds: 25 * 60, label: "work",       color: "#06b6d4" },
+        short:    { seconds:  5 * 60, label: "short break",color: "#22c55e" },
+        long:     { seconds: 15 * 60, label: "long break", color: "#a855f7" }
+      };
+      const LS_KEY = "blocs-pomodoro-mode";
+
+      const $time   = document.getElementById("time");
+      const $mode   = document.getElementById("modeLabel");
+      const $ring   = document.getElementById("ring");
+      const $play   = document.getElementById("playBtn");
+      const $reset  = document.getElementById("resetBtn");
+      const $tabs   = Array.from(document.querySelectorAll(".tab"));
+
+      // Inline SVG paths we swap on the play button (play ↔ pause).
+      const ICON_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>';
+      const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7"  y="5" width="3.2" height="14" rx="1"/><rect x="13.8" y="5" width="3.2" height="14" rx="1"/></svg>';
+
+      let state = "idle";           // 'idle' | 'running' | 'paused'
+      let mode  = localStorage.getItem(LS_KEY) || "pomodoro";
+      let remaining = MODES[mode].seconds;   // seconds left in current session
+      let tickId = null;
+      let endsAt = 0;               // ms epoch — used so the timer is drift-free
+
+      // ---------- helpers ----------
+      const fmt = (s) => {
+        s = Math.max(0, Math.floor(s));
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return String(m).padStart(2, "0") + ":" + String(r).padStart(2, "0");
+      };
+      const setAccent = (hex) => {
+        document.documentElement.style.setProperty("--accent", hex);
+        $ring.style.setProperty("--accent", hex);
+      };
+      const render = () => {
+        $time.textContent = fmt(remaining);
+        $mode.textContent = MODES[mode].label;
+        const total = MODES[mode].seconds;
+        const p = total > 0 ? 1 - (remaining / total) : 1;
+        $ring.style.setProperty("--p", p.toFixed(4));
+        $ring.classList.toggle("running", state === "running");
+      };
+      const setPlayIcon = (running) => {
+        $play.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
+        $play.setAttribute("aria-label", running ? "Pause" : "Start");
+      };
+
+      // ---------- mode switching ----------
+      const switchMode = (next) => {
+        if (!MODES[next] || next === mode) return;
+        mode = next;
+        localStorage.setItem(LS_KEY, mode);
+        stopTick();
+        stopRing();
+        state = "idle";
+        remaining = MODES[mode].seconds;
+        setAccent(MODES[mode].color);
+        $tabs.forEach(t => t.setAttribute(
+          "aria-selected",
+          String(t.dataset.mode === mode)
+        ));
+        setPlayIcon(false);
+        render();
+      };
+
+      // ---------- tick loop (drift-free via endsAt) ----------
+      const startTick = () => {
+        stopTick();
+        endsAt = Date.now() + remaining * 1000;
+        state = "running";
+        setPlayIcon(true);
+        render();
+        tickId = setInterval(() => {
+          const left = Math.round((endsAt - Date.now()) / 1000);
+          if (left <= 0) {
+            remaining = 0;
+            stopTick();
+            onComplete();
+            render();
+            return;
+          }
+          remaining = left;
+          render();
+        }, 250);
+      };
+      const stopTick = () => {
+        if (tickId) { clearInterval(tickId); tickId = null; }
+      };
+
+      // ---------- finish ----------
+      const onComplete = () => {
+        state = "idle";
+        setPlayIcon(false);
+        render();
+        ring();
+        // Stay on the current mode (Blocs behavior). Press Reset / switch
+        // tab / press Play again to silence the alarm.
+      };
+
+      // ---------- audio: alarm ring (3 beeps, repeats until stopped) ----------
+      let audioCtx   = null;
+      let ringTimer  = null;   // setInterval id for the repeating alarm
+
+      const ring = () => {
+        stopRing();
+        try {
+          audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+          const ctx = audioCtx;
+          // Browsers may have suspended the context — wake it up
+          if (ctx.state === "suspended") ctx.resume();
+
+          $ring.classList.add("ringing");
+
+          // One "burst" = 3 short beeps, ~0.9 s total
+          const burst = () => {
+            const now = ctx.currentTime;
+            const notes = [
+              { f: 988, t: now + 0.00 },  // B5
+              { f: 988, t: now + 0.28 },
+              { f: 988, t: now + 0.56 },
+            ];
+            notes.forEach(({ f, t }) => {
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              o.type = "sine";
+              o.frequency.setValueAtTime(f, t);
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.45, t + 0.02);
+              g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+              o.connect(g).connect(ctx.destination);
+              o.start(t);
+              o.stop(t + 0.25);
+            });
+          };
+
+          burst();                       // first burst immediately
+          ringTimer = setInterval(burst, 1400); // then every 1.4 s
+        } catch (_) { /* audio blocked — silently ignore */ }
+      };
+
+      const stopRing = () => {
+        if (ringTimer) { clearInterval(ringTimer); ringTimer = null; }
+        $ring.classList.remove("ringing");
+      };
+
+      // ---------- events ----------
+      $play.addEventListener("click", () => {
+        if (state === "running") {
+          // Pause
+          stopTick();
+          state = "paused";
+          setPlayIcon(false);
+          render();
+        } else {
+          // Start (works from idle and from paused). Silences the alarm
+          // if it was still ringing from a previous session.
+          stopRing();
+          startTick();
+        }
+      });
+
+      $reset.addEventListener("click", () => {
+        stopTick();
+        stopRing();
+        state = "idle";
+        remaining = MODES[mode].seconds;
+        setPlayIcon(false);
+        render();
+      });
+
+      $tabs.forEach(t => t.addEventListener("click", () => switchMode(t.dataset.mode)));
+
+      // Keyboard: space toggles play, R resets. (Nice-to-have, harmless.)
+      document.addEventListener("keydown", (e) => {
+        if (e.target && /input|textarea/i.test(e.target.tagName)) return;
+        if (e.code === "Space") { e.preventDefault(); $play.click(); }
+        else if (e.key === "r" || e.key === "R") { $reset.click(); }
+      });
+
+      // ---------- boot ----------
+      setAccent(MODES[mode].color);
+      $tabs.forEach(t => t.setAttribute(
+        "aria-selected",
+        String(t.dataset.mode === mode)
+      ));
+      setPlayIcon(false);
+      render();
+    })();
+  </script>
+</body>
+</html>
