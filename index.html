@@ -25,6 +25,7 @@
     }
 
     .card {
+      position: relative;
       width: 100%;
       max-width: 280px;
       background: var(--card-bg, #ffffff);
@@ -185,6 +186,191 @@
       animation: alarm-pulse 1.1s ease-in-out infinite;
     }
 
+    /* ---------- Settings gear button ---------- */
+    .gearBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--tab-fg, #9ca3af);
+      opacity: 0.7;
+      transition: opacity .15s ease, background .15s ease, transform .2s ease;
+      z-index: 2;
+    }
+    .gearBtn:hover { opacity: 1; background: var(--btn-bg-hover, #f9fafb); }
+    .gearBtn:active { transform: scale(0.92); }
+    .gearBtn svg { width: 16px; height: 16px; }
+    .gearBtn.open { transform: rotate(40deg); opacity: 1; }
+
+    /* ---------- Settings panel ---------- */
+    .settingsPanel {
+      position: absolute;
+      inset: 0;
+      background: var(--card-bg, #ffffff);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition: opacity .16s ease, transform .16s ease, visibility .16s;
+      z-index: 3;
+      overflow-y: auto;
+    }
+    .settingsPanel.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .settingsHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .settingsHead h2 {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0;
+      color: var(--fg, #111827);
+    }
+    .closeBtn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--tab-fg, #9ca3af);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    .closeBtn:hover { background: var(--btn-bg-hover, #f9fafb); }
+    .closeBtn svg { width: 15px; height: 15px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mode-fg, #4b5563);
+      display: flex;
+      justify-content: space-between;
+    }
+    .field label .val { font-weight: 400; color: var(--tab-fg, #9ca3af); }
+
+    .field input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent, #06b6d4);
+      cursor: pointer;
+    }
+
+    .segGroup {
+      display: flex;
+      gap: 4px;
+      background: var(--ring-track, #e5e7eb);
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .segGroup button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mode-fg, #4b5563);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease;
+    }
+    .segGroup button.active {
+      background: var(--card-bg, #ffffff);
+      color: var(--fg, #111827);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+
+    .colorRow { display: flex; align-items: center; gap: 10px; }
+    .colorRow input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+    }
+    .swatches { display: flex; gap: 6px; flex: 1; }
+    .swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color .15s ease, transform .1s ease;
+      padding: 0;
+    }
+    .swatch:hover { transform: scale(1.08); }
+    .swatch.active { border-color: var(--fg, #111827); }
+
+    .soundRow { display: flex; align-items: center; gap: 8px; }
+    .soundRow select {
+      flex: 1;
+      font: inherit;
+      font-size: 12px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--btn-border, #e5e7eb);
+      background: var(--btn-bg, #ffffff);
+      color: var(--fg, #111827);
+      cursor: pointer;
+    }
+    .testSoundBtn {
+      border: 1px solid var(--btn-border, #e5e7eb);
+      background: var(--btn-bg, #ffffff);
+      color: var(--fg, #111827);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .testSoundBtn:hover { background: var(--btn-bg-hover, #f9fafb); }
+
+    .settingsFoot {
+      margin-top: auto;
+      display: flex;
+      gap: 8px;
+      padding-top: 4px;
+    }
+    .settingsFoot button {
+      flex: 1;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 0;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .saveBtn { background: var(--accent, #06b6d4); color: #fff; }
+    .resetDefaultsBtn {
+      background: transparent;
+      color: var(--mode-fg, #4b5563);
+      border: 1px solid var(--btn-border, #e5e7eb) !important;
+    }
+    .resetDefaultsBtn:hover { background: var(--btn-bg-hover, #f9fafb); }
+
     /* ---------- Themes ---------- */
     body.theme-light {
       --bg: #f5f5f7;
@@ -232,6 +418,15 @@
 </head>
 <body class="theme-light">
   <main class="card" role="region" aria-label="Pomodoro timer">
+    <!-- Settings gear -->
+    <button class="gearBtn" id="gearBtn" aria-label="Open settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+
     <!-- Tabs -->
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" data-mode="pomodoro"  aria-selected="true">Pomodoro</button>
@@ -265,23 +460,102 @@
     <div class="footer">
       <a href="#" id="powered" tabindex="-1">Powered by Swiftry</a>
     </div>
+
+    <!-- Settings panel (overlay) -->
+    <div class="settingsPanel" id="settingsPanel" role="dialog" aria-label="Widget settings">
+      <div class="settingsHead">
+        <h2>Settings</h2>
+        <button class="closeBtn" id="closeSettingsBtn" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Work duration <span class="val" id="durationVal">25 min</span></label>
+        <input type="range" id="durationInput" min="1" max="120" step="1" value="25" />
+      </div>
+
+      <div class="field">
+        <label>Theme</label>
+        <div class="segGroup" id="themeGroup">
+          <button data-theme="light">Light</button>
+          <button data-theme="dark">Dark</button>
+          <button data-theme="sunset">Sunset</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Accent color</label>
+        <div class="colorRow">
+          <input type="color" id="accentInput" value="#06b6d4" />
+          <div class="swatches" id="swatchGroup">
+            <button class="swatch" style="background:#06b6d4" data-color="#06b6d4" aria-label="Cyan"></button>
+            <button class="swatch" style="background:#ef4444" data-color="#ef4444" aria-label="Red"></button>
+            <button class="swatch" style="background:#22c55e" data-color="#22c55e" aria-label="Green"></button>
+            <button class="swatch" style="background:#a855f7" data-color="#a855f7" aria-label="Purple"></button>
+            <button class="swatch" style="background:#f59e0b" data-color="#f59e0b" aria-label="Amber"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Sound</label>
+        <div class="soundRow">
+          <select id="soundInput">
+            <option value="chime">Chime</option>
+            <option value="bell">Bell</option>
+            <option value="alarm">Alarm</option>
+            <option value="off">Off</option>
+          </select>
+          <button class="testSoundBtn" id="testSoundBtn" type="button">Test</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Auto-start sessions</label>
+        <div class="segGroup" id="autostartGroup">
+          <button data-autostart="false">Off</button>
+          <button data-autostart="true">On</button>
+        </div>
+      </div>
+
+      <div class="settingsFoot">
+        <button class="resetDefaultsBtn" id="resetDefaultsBtn" type="button">Reset</button>
+        <button class="saveBtn" id="saveSettingsBtn" type="button">Done</button>
+      </div>
+    </div>
   </main>
 
   <script>
     /* =====================================================================
        Pomodoro Widget — Swiftry
-       Configurable via URL query params:
-         ?duration=25      → work session length in minutes (default 25)
-         &theme=light       → light | dark | sunset (default light)
-         &accent=%2306b6d4  → hex color, URL-encoded # as %23 (default cyan)
-         &sound=chime       → chime | bell | alarm | off (default chime)
-         &autostart=true    → true | false — auto-start the timer on load
-       Example embed URL:
+       Two ways to configure this widget:
+
+       1. URL query params (useful for sharing a pre-configured embed link):
+            ?duration=25      → work session length in minutes (default 25)
+            &theme=light       → light | dark | sunset (default light)
+            &accent=%2306b6d4  → hex color, URL-encoded # as %23 (default cyan)
+            &sound=chime       → chime | bell | alarm | off (default chime)
+            &autostart=true    → true | false — auto-start the timer on load
+
+       2. The in-widget settings panel (gear icon, top-right). Changes made
+          there are saved to localStorage and take priority over the URL on
+          every load after the first — so a user who has tweaked their
+          widget keeps their preferences even on a plain embed link.
+
+       Example pre-configured embed URL:
          index.html?duration=45&theme=dark&accent=%23ff6b6b&sound=bell&autostart=true
        ===================================================================== */
     (function () {
-      // ---------- read & validate URL params ----------
-      const params = new URLSearchParams(window.location.search);
+      const STORAGE_KEY = "swiftry-pomodoro-settings";
+      const LS_MODE_KEY  = "swiftry-pomodoro-mode";
+
+      const VALID_THEMES = ["light", "dark", "sunset"];
+      const VALID_SOUNDS = ["chime", "bell", "alarm", "off"];
+      const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
       const clampInt = (v, min, max, fallback) => {
         const n = parseInt(v, 10);
@@ -289,42 +563,49 @@
         return Math.min(max, Math.max(min, n));
       };
 
-      const VALID_THEMES = ["light", "dark", "sunset"];
-      const VALID_SOUNDS = ["chime", "bell", "alarm", "off"];
-      const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-
-      const workMinutes = clampInt(params.get("duration"), 1, 180, 25);
-
-      let theme = (params.get("theme") || "light").toLowerCase();
-      if (!VALID_THEMES.includes(theme)) theme = "light";
-
-      let accent = params.get("accent") || "#06b6d4";
-      if (!HEX_RE.test(accent)) accent = "#06b6d4";
-
-      let sound = (params.get("sound") || "chime").toLowerCase();
-      if (!VALID_SOUNDS.includes(sound)) sound = "chime";
-
-      const autostart = (params.get("autostart") || "false").toLowerCase() === "true";
-
-      // ---------- apply theme ----------
-      document.body.classList.remove("theme-light");
-      document.body.classList.add("theme-" + theme);
-
-      // ---------- modes ----------
-      // Work session length is configurable; breaks scale proportionally
-      // off the classic 25/5/15 Pomodoro ratio so a 50-min "duration" still
-      // feels balanced (10-min short break, 30-min long break) rather than
-      // forcing fixed 5/15-min breaks regardless of work length.
-      const RATIO_SHORT = 5 / 25;
-      const RATIO_LONG  = 15 / 25;
-
-      const MODES = {
-        pomodoro: { seconds: workMinutes * 60, label: "work",        color: accent },
-        short:    { seconds: Math.round(workMinutes * RATIO_SHORT) * 60, label: "short break", color: "#22c55e" },
-        long:     { seconds: Math.round(workMinutes * RATIO_LONG)  * 60, label: "long break",  color: "#a855f7" }
+      const DEFAULTS = {
+        duration: 25,
+        theme: "light",
+        accent: "#06b6d4",
+        sound: "chime",
+        autostart: false
       };
-      const LS_KEY = "swiftry-pomodoro-mode";
 
+      // ---------- resolve initial settings: URL params first ----------
+      const params = new URLSearchParams(window.location.search);
+
+      const fromUrl = {
+        duration: clampInt(params.get("duration"), 1, 180, DEFAULTS.duration),
+        theme: VALID_THEMES.includes((params.get("theme") || "").toLowerCase())
+          ? params.get("theme").toLowerCase() : DEFAULTS.theme,
+        accent: HEX_RE.test(params.get("accent") || "")
+          ? params.get("accent") : DEFAULTS.accent,
+        sound: VALID_SOUNDS.includes((params.get("sound") || "").toLowerCase())
+          ? params.get("sound").toLowerCase() : DEFAULTS.sound,
+        autostart: (params.get("autostart") || "false").toLowerCase() === "true"
+      };
+
+      // ---------- then localStorage overrides (if the user has saved settings before) ----------
+      let settings = { ...fromUrl };
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && typeof saved === "object") {
+          settings = {
+            duration: clampInt(saved.duration, 1, 180, fromUrl.duration),
+            theme: VALID_THEMES.includes(saved.theme) ? saved.theme : fromUrl.theme,
+            accent: HEX_RE.test(saved.accent || "") ? saved.accent : fromUrl.accent,
+            sound: VALID_SOUNDS.includes(saved.sound) ? saved.sound : fromUrl.sound,
+            autostart: typeof saved.autostart === "boolean" ? saved.autostart : fromUrl.autostart
+          };
+        }
+      } catch (_) { /* corrupted storage — ignore, fall back to URL/defaults */ }
+
+      const persistSettings = () => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); }
+        catch (_) { /* storage unavailable — silently ignore */ }
+      };
+
+      // ---------- DOM refs ----------
       const $time   = document.getElementById("time");
       const $mode   = document.getElementById("modeLabel");
       const $ring   = document.getElementById("ring");
@@ -332,15 +613,54 @@
       const $reset  = document.getElementById("resetBtn");
       const $tabs   = Array.from(document.querySelectorAll(".tab"));
 
+      const $gearBtn        = document.getElementById("gearBtn");
+      const $settingsPanel  = document.getElementById("settingsPanel");
+      const $closeSettings  = document.getElementById("closeSettingsBtn");
+      const $durationInput  = document.getElementById("durationInput");
+      const $durationVal    = document.getElementById("durationVal");
+      const $themeGroup     = document.getElementById("themeGroup");
+      const $accentInput    = document.getElementById("accentInput");
+      const $swatchGroup    = document.getElementById("swatchGroup");
+      const $soundInput     = document.getElementById("soundInput");
+      const $testSoundBtn   = document.getElementById("testSoundBtn");
+      const $autostartGroup = document.getElementById("autostartGroup");
+      const $resetDefaults  = document.getElementById("resetDefaultsBtn");
+      const $saveSettings   = document.getElementById("saveSettingsBtn");
+
       const ICON_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>';
       const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7"  y="5" width="3.2" height="14" rx="1"/><rect x="13.8" y="5" width="3.2" height="14" rx="1"/></svg>';
 
+      // ---------- modes (derived from settings.duration; breaks scale proportionally) ----------
+      const RATIO_SHORT = 5 / 25;
+      const RATIO_LONG  = 15 / 25;
+      let MODES = {};
+      const rebuildModes = () => {
+        MODES = {
+          pomodoro: { seconds: settings.duration * 60, label: "work", color: settings.accent },
+          short:    { seconds: Math.max(60, Math.round(settings.duration * RATIO_SHORT) * 60), label: "short break", color: "#22c55e" },
+          long:     { seconds: Math.max(60, Math.round(settings.duration * RATIO_LONG) * 60),  label: "long break",  color: "#a855f7" }
+        };
+      };
+      rebuildModes();
+
       let state = "idle";           // 'idle' | 'running' | 'paused'
-      let mode  = localStorage.getItem(LS_KEY) || "pomodoro";
+      let mode  = localStorage.getItem(LS_MODE_KEY) || "pomodoro";
       if (!MODES[mode]) mode = "pomodoro";
       let remaining = MODES[mode].seconds;
       let tickId = null;
       let endsAt = 0;
+
+      // ---------- pomodoro cycle counter ----------
+      // Classic technique: after each of the first 3 completed work
+      // sessions, take a short break; after the 4th, take a long break
+      // and reset the counter. Persisted so a page reload mid-cycle
+      // doesn't silently restart the count at 1.
+      const LS_CYCLE_KEY = "swiftry-pomodoro-cycle";
+      let cycleCount = clampInt(localStorage.getItem(LS_CYCLE_KEY), 0, 3, 0);
+      const persistCycle = () => {
+        try { localStorage.setItem(LS_CYCLE_KEY, String(cycleCount)); }
+        catch (_) { /* storage unavailable — silently ignore */ }
+      };
 
       // ---------- helpers ----------
       const fmt = (s) => {
@@ -365,22 +685,28 @@
         $play.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
         $play.setAttribute("aria-label", running ? "Pause" : "Start");
       };
+      const applyTheme = (theme) => {
+        VALID_THEMES.forEach(t => document.body.classList.remove("theme-" + t));
+        document.body.classList.add("theme-" + theme);
+      };
 
       // ---------- mode switching ----------
-      const switchMode = (next) => {
-        if (!MODES[next] || next === mode) return;
+      const switchMode = (next, { resetTimer = true } = {}) => {
+        if (!MODES[next]) return;
         mode = next;
-        localStorage.setItem(LS_KEY, mode);
-        stopTick();
-        stopRing();
-        state = "idle";
-        remaining = MODES[mode].seconds;
-        setAccent(MODES[mode].color);
+        localStorage.setItem(LS_MODE_KEY, mode);
+        if (resetTimer) {
+          stopTick();
+          stopRing();
+          state = "idle";
+          remaining = MODES[mode].seconds;
+          setPlayIcon(false);
+        }
+        setAccent(mode === "pomodoro" ? settings.accent : MODES[mode].color);
         $tabs.forEach(t => t.setAttribute(
           "aria-selected",
           String(t.dataset.mode === mode)
         ));
-        setPlayIcon(false);
         render();
       };
 
@@ -408,12 +734,37 @@
         if (tickId) { clearInterval(tickId); tickId = null; }
       };
 
-      // ---------- finish ----------
+      // ---------- finish: auto-advance to the next mode in the cycle ----------
+      // pomodoro -> short break (x3) -> pomodoro -> ... -> long break -> pomodoro -> (counter resets)
+      const nextModeAfter = (finishedMode) => {
+        if (finishedMode === "pomodoro") {
+          cycleCount += 1;
+          if (cycleCount >= 4) {
+            cycleCount = 0;
+            persistCycle();
+            return "long";
+          }
+          persistCycle();
+          return "short";
+        }
+        // After any break (short or long), always return to work.
+        return "pomodoro";
+      };
+
       const onComplete = () => {
+        const finishedMode = mode;
         state = "idle";
         setPlayIcon(false);
         render();
-        playSound();
+        playSound(settings.sound);
+
+        const next = nextModeAfter(finishedMode);
+        // Switch to the next mode (resets remaining to its full duration)
+        // and immediately start it — the alarm sound above already played,
+        // so this is a clean transition into the next session.
+        switchMode(next, { resetTimer: true });
+        stopRing();
+        startTick();
       };
 
       // ---------- audio: three distinct generated sounds + off ----------
@@ -439,21 +790,16 @@
         o.stop(startAt + dur + 0.02);
       };
 
-      // chime: soft two-note ascending sine, single gentle burst, repeats slowly
       const burstChime = (ctx) => {
         const now = ctx.currentTime;
-        tone(ctx, 784, now,         0.5, "sine", 0.3);  // G5
-        tone(ctx, 1046, now + 0.18, 0.6, "sine", 0.28); // C6
+        tone(ctx, 784, now,         0.5, "sine", 0.3);
+        tone(ctx, 1046, now + 0.18, 0.6, "sine", 0.28);
       };
-
-      // bell: bright triangle hit with a slight overtone, like a desk bell
       const burstBell = (ctx) => {
         const now = ctx.currentTime;
-        tone(ctx, 1318, now, 0.9, "triangle", 0.35); // E6 fundamental
-        tone(ctx, 2637, now, 0.5, "sine",     0.08); // octave overtone, quieter
+        tone(ctx, 1318, now, 0.9, "triangle", 0.35);
+        tone(ctx, 2637, now, 0.5, "sine",     0.08);
       };
-
-      // alarm: insistent square-wave triple beep (the original "Blocs" alarm)
       const burstAlarm = (ctx) => {
         const now = ctx.currentTime;
         [0, 0.28, 0.56].forEach((offset) => {
@@ -467,15 +813,18 @@
         alarm: { fn: burstAlarm, interval: 1400 }
       };
 
-      const playSound = () => {
+      // soundName lets the "Test" button preview a sound without it being saved yet
+      const playSound = (soundName, { loop = true } = {}) => {
         stopRing();
-        if (sound === "off") return; // visual pulse still happens via CSS class below
+        if (soundName === "off") return;
         try {
           const ctx = getCtx();
-          const { fn, interval } = SOUND_BURSTS[sound];
+          const entry = SOUND_BURSTS[soundName];
+          if (!entry) return;
           $ring.classList.add("ringing");
-          fn(ctx);
-          ringTimer = setInterval(() => fn(ctx), interval);
+          entry.fn(ctx);
+          if (loop) ringTimer = setInterval(() => entry.fn(ctx), entry.interval);
+          else setTimeout(() => $ring.classList.remove("ringing"), 900);
         } catch (_) { /* audio blocked — silently ignore */ }
       };
 
@@ -484,7 +833,7 @@
         $ring.classList.remove("ringing");
       };
 
-      // ---------- events ----------
+      // ---------- timer controls ----------
       $play.addEventListener("click", () => {
         if (state === "running") {
           stopTick();
@@ -509,13 +858,124 @@
       $tabs.forEach(t => t.addEventListener("click", () => switchMode(t.dataset.mode)));
 
       document.addEventListener("keydown", (e) => {
-        if (e.target && /input|textarea/i.test(e.target.tagName)) return;
+        if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+        if ($settingsPanel.classList.contains("open")) return;
         if (e.code === "Space") { e.preventDefault(); $play.click(); }
         else if (e.key === "r" || e.key === "R") { $reset.click(); }
       });
 
+      // =====================================================================
+      // Settings panel wiring
+      // =====================================================================
+      let draft = { ...settings }; // edits live here until "Done" is pressed
+
+      const syncPanelUI = () => {
+        $durationInput.value = draft.duration;
+        $durationVal.textContent = draft.duration + " min";
+
+        Array.from($themeGroup.children).forEach(btn =>
+          btn.classList.toggle("active", btn.dataset.theme === draft.theme));
+
+        $accentInput.value = draft.accent;
+        Array.from($swatchGroup.children).forEach(sw =>
+          sw.classList.toggle("active", sw.dataset.color.toLowerCase() === draft.accent.toLowerCase()));
+
+        $soundInput.value = draft.sound;
+
+        Array.from($autostartGroup.children).forEach(btn =>
+          btn.classList.toggle("active", (btn.dataset.autostart === "true") === draft.autostart));
+      };
+
+      const openPanel = () => {
+        draft = { ...settings };
+        syncPanelUI();
+        $settingsPanel.classList.add("open");
+        $gearBtn.classList.add("open");
+      };
+      const closePanel = () => {
+        $settingsPanel.classList.remove("open");
+        $gearBtn.classList.remove("open");
+        stopRing(); // in case "Test sound" left it ringing
+      };
+
+      $gearBtn.addEventListener("click", () => {
+        if ($settingsPanel.classList.contains("open")) closePanel();
+        else openPanel();
+      });
+      $closeSettings.addEventListener("click", closePanel);
+
+      $durationInput.addEventListener("input", () => {
+        draft.duration = clampInt($durationInput.value, 1, 120, DEFAULTS.duration);
+        $durationVal.textContent = draft.duration + " min";
+      });
+
+      $themeGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-theme]");
+        if (!btn) return;
+        draft.theme = btn.dataset.theme;
+        syncPanelUI();
+        applyTheme(draft.theme); // live preview while panel is open
+      });
+
+      $accentInput.addEventListener("input", () => {
+        draft.accent = $accentInput.value;
+        syncPanelUI();
+        setAccent(draft.accent); // live preview
+      });
+      $swatchGroup.addEventListener("click", (e) => {
+        const sw = e.target.closest("button[data-color]");
+        if (!sw) return;
+        draft.accent = sw.dataset.color;
+        syncPanelUI();
+        setAccent(draft.accent);
+      });
+
+      $soundInput.addEventListener("change", () => { draft.sound = $soundInput.value; });
+      $testSoundBtn.addEventListener("click", () => playSound(draft.sound, { loop: false }));
+
+      $autostartGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-autostart]");
+        if (!btn) return;
+        draft.autostart = btn.dataset.autostart === "true";
+        syncPanelUI();
+      });
+
+      $resetDefaults.addEventListener("click", () => {
+        draft = { ...DEFAULTS };
+        syncPanelUI();
+        applyTheme(draft.theme);
+        setAccent(draft.accent);
+      });
+
+      $saveSettings.addEventListener("click", () => {
+        settings = { ...draft };
+        persistSettings();
+        rebuildModes();
+        applyTheme(settings.theme);
+        // Re-apply current mode's timer with the new durations, restarting
+        // at "idle" for whichever mode is active so the new duration takes
+        // effect immediately rather than only on the next manual switch.
+        stopTick();
+        stopRing();
+        state = "idle";
+        remaining = MODES[mode].seconds;
+        setPlayIcon(false);
+        setAccent(mode === "pomodoro" ? settings.accent : MODES[mode].color);
+        render();
+        closePanel();
+      });
+
+      // Close panel on outside click (clicking the dimmed page area, not the card)
+      document.addEventListener("click", (e) => {
+        if (!$settingsPanel.classList.contains("open")) return;
+        if (e.target === $gearBtn || $gearBtn.contains(e.target)) return;
+        if ($settingsPanel.contains(e.target)) return;
+        closePanel();
+      });
+
       // ---------- boot ----------
-      setAccent(MODES[mode].color);
+      applyTheme(settings.theme);
+      setAccent(settings.accent);
       $tabs.forEach(t => t.setAttribute(
         "aria-selected",
         String(t.dataset.mode === mode)
@@ -523,7 +983,7 @@
       setPlayIcon(false);
       render();
 
-      if (autostart) {
+      if (settings.autostart) {
         // Browsers block AudioContext until a user gesture, so the very
         // first auto-started session may complete silently if the user
         // never interacted with the page — this is expected/unavoidable.
