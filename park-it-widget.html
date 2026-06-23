@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Park It — Swiftry</title>
+  <style>
+    /* ---------- Reset & base ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg, #f4f7f6);
+      color: var(--fg, #1f2a28);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+      transition: background .2s ease, color .2s ease;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      height: 460px;
+      background: var(--card-bg, #ffffff);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow:
+        0 1px 0 rgba(0,0,0,0.02),
+        0 8px 24px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background .2s ease;
+    }
+
+    /* Soft organic blobs in the background — barely visible, just texture */
+    .blob {
+      position: absolute;
+      top: -60px;
+      right: -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 42% 58% 65% 35% / 45% 40% 60% 55%;
+      background: var(--blob-color, #e3f1ee);
+      opacity: 0.6;
+      z-index: 0;
+      pointer-events: none;
+      transition: background .2s ease;
+    }
+    .blob.blobTwo {
+      top: auto;
+      right: auto;
+      bottom: -50px;
+      left: -50px;
+      width: 150px;
+      height: 150px;
+      border-radius: 55% 45% 40% 60% / 50% 55% 45% 50%;
+      opacity: 0.4;
+    }
+
+    /* ---------- Header ---------- */
+    .header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-right: 30px;
+    }
+    .headerLeft { display: flex; align-items: center; gap: 9px; }
+
+    /* Detailed leaf mark: layered shape + midrib + side veins, filled
+       softly rather than a bare outline, so it reads as an actual leaf
+       rather than an abstract squiggle. */
+    .leafMark { width: 26px; height: 26px; flex-shrink: 0; }
+    .leafMark .leafBody { fill: var(--accent, #4fae9c); opacity: 0.18; }
+    .leafMark .leafOutline { fill: none; stroke: var(--accent, #4fae9c); stroke-width: 1.4; stroke-linejoin: round; }
+    .leafMark .leafVein { fill: none; stroke: var(--accent, #4fae9c); stroke-width: 1; stroke-linecap: round; opacity: 0.7; }
+
+    .headerText { display: flex; flex-direction: column; gap: 2px; }
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fg, #1f2a28);
+    }
+    .counter {
+      font-size: 11px;
+      color: var(--mode-fg, #5b6b67);
+    }
+    .counter .n {
+      font-weight: 700;
+      color: var(--accent, #4fae9c);
+    }
+    .streak {
+      font-size: 10px;
+      color: var(--tab-fg, #94a6a1);
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .streak svg { width: 10px; height: 10px; opacity: 0.8; }
+    .streak.lit { color: var(--accent, #4fae9c); }
+
+    /* ---------- Settings gear ---------- */
+    .gearBtn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--tab-fg, #94a6a1);
+      opacity: 0.7;
+      transition: opacity .15s ease, background .15s ease, transform .2s ease;
+      z-index: 4;
+    }
+    .gearBtn:hover { opacity: 1; background: var(--btn-bg-hover, #f1f6f4); }
+    .gearBtn:active { transform: scale(0.92); }
+    .gearBtn svg { width: 15px; height: 15px; }
+    .gearBtn.open { transform: rotate(40deg); opacity: 1; }
+
+    /* ---------- Capture input ---------- */
+    .captureRow {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .captureInput {
+      flex: 1;
+      font: inherit;
+      font-size: 13px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--btn-border, #dde8e5);
+      background: var(--input-bg, #f7fbfa);
+      color: var(--fg, #1f2a28);
+      outline: none;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .captureInput::placeholder { color: var(--tab-fg, #94a6a1); }
+    .captureInput:focus {
+      border-color: var(--accent, #4fae9c);
+      background: var(--card-bg, #ffffff);
+    }
+    .captureBtn {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent, #4fae9c);
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .15s ease, transform .05s ease;
+    }
+    .captureBtn:hover { opacity: 0.9; }
+    .captureBtn:active { transform: scale(0.94); }
+    .captureBtn svg { width: 16px; height: 16px; }
+
+    .captureRow.flash .captureInput {
+      border-color: var(--success, #6fbf9b);
+    }
+
+    /* ---------- Quick tags (shown under the input while typing/focused) ---------- */
+    .tagRow {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .tagChip {
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--btn-border, #dde8e5);
+      background: var(--card-bg, #ffffff);
+      color: var(--mode-fg, #5b6b67);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background .12s ease, border-color .12s ease, color .12s ease;
+    }
+    .tagChip .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .tagChip[data-tag="todo"]   .dot { background: #e3a96d; }
+    .tagChip[data-tag="idea"]   .dot { background: #7fa8d6; }
+    .tagChip[data-tag="worry"]  .dot { background: #a895c9; }
+    .tagChip.active { border-color: currentColor; }
+    .tagChip[data-tag="todo"].active   { color: #b3742f; background: #fbeee0; border-color: #e3a96d; }
+    .tagChip[data-tag="idea"].active   { color: #3f6fa8; background: #eaf1fa; border-color: #7fa8d6; }
+    .tagChip[data-tag="worry"].active  { color: #6e5694; background: #f1ecf7; border-color: #a895c9; }
+
+    /* ---------- Filter row ---------- */
+    .filterRow {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .filterChip {
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: none;
+      background: var(--ring-track, #e3ece9);
+      color: var(--mode-fg, #5b6b67);
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease;
+    }
+    .filterChip.active { background: var(--accent, #4fae9c); color: #fff; }
+
+    /* ---------- Thought list ---------- */
+    .listWrap {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 2px;
+    }
+    .listWrap::-webkit-scrollbar { width: 5px; }
+    .listWrap::-webkit-scrollbar-thumb {
+      background: var(--ring-track, #e3ece9);
+      border-radius: 4px;
+    }
+
+    .emptyState {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--tab-fg, #94a6a1);
+      text-align: center;
+      padding: 0 24px;
+    }
+    .emptyState .emptyIcon {
+      width: 40px;
+      height: 40px;
+      color: var(--accent, #4fae9c);
+      opacity: 0.55;
+    }
+    .emptyState p { font-size: 12px; margin: 0; line-height: 1.55; }
+    .emptyState p.small { font-size: 10.5px; color: var(--tab-fg, #94a6a1); opacity: 0.85; }
+
+    .thought {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      background: var(--input-bg, #f7fbfa);
+      animation: thought-in .18s ease;
+      border-left: 2.5px solid transparent;
+    }
+    .thought[data-tag="todo"]  { border-left-color: #e3a96d; }
+    .thought[data-tag="idea"]  { border-left-color: #7fa8d6; }
+    .thought[data-tag="worry"] { border-left-color: #a895c9; }
+    @keyframes thought-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .thought.done { opacity: 0.45; }
+    .thought.done .thoughtText { text-decoration: line-through; }
+
+    .thoughtCheck {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid var(--btn-border, #d3e2dd);
+      background: var(--card-bg, #ffffff);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .thoughtCheck svg {
+      width: 11px; height: 11px;
+      opacity: 0;
+      transition: opacity .1s ease;
+      color: #fff;
+    }
+    .thought.done .thoughtCheck {
+      background: var(--accent, #4fae9c);
+      border-color: var(--accent, #4fae9c);
+    }
+    .thought.done .thoughtCheck svg { opacity: 1; }
+
+    .thoughtBody { flex: 1; min-width: 0; }
+    .thoughtText {
+      font-size: 13px;
+      color: var(--fg, #1f2a28);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .thoughtTime {
+      font-size: 10px;
+      color: var(--tab-fg, #94a6a1);
+      margin-top: 2px;
+    }
+
+    .deleteBtn {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border: none;
+      background: transparent;
+      color: var(--tab-fg, #94a6a1);
+      cursor: pointer;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .12s ease, background .12s ease, color .12s ease;
+    }
+    .thought:hover .deleteBtn { opacity: 1; }
+    .deleteBtn:hover { background: var(--btn-bg-hover, #eef5f3); color: var(--danger, #e08585); }
+    .deleteBtn svg { width: 12px; height: 12px; }
+
+    /* ---------- Footer ---------- */
+    .footer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--ring-track, #e3ece9);
+    }
+    .footerNote {
+      font-size: 10px;
+      color: var(--footer-fg, #a8b8b4);
+    }
+    .footerActions { display: flex; gap: 4px; }
+    .footerActionBtn {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mode-fg, #5b6b67);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background .12s ease, color .12s ease;
+    }
+    #copyAllBtn:hover { background: var(--btn-bg-hover, #f1f6f4); color: var(--accent, #4fae9c); }
+    #clearAllBtn:hover { background: var(--btn-bg-hover, #f1f6f4); color: var(--danger, #e08585); }
+    #copyAllBtn.copied { color: var(--success, #6fbf9b); }
+
+    /* ---------- Settings panel ---------- */
+    .settingsPanel {
+      position: absolute;
+      inset: 0;
+      background: var(--card-bg, #ffffff);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition: opacity .16s ease, transform .16s ease, visibility .16s;
+      z-index: 5;
+      overflow-y: auto;
+    }
+    .settingsPanel.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .settingsHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+    .settingsHead h2 { font-size: 13px; font-weight: 600; margin: 0; color: var(--fg, #1f2a28); }
+    .closeBtn {
+      width: 24px; height: 24px; border: none; background: transparent; cursor: pointer;
+      color: var(--tab-fg, #94a6a1); display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+    }
+    .closeBtn:hover { background: var(--btn-bg-hover, #f1f6f4); }
+    .closeBtn svg { width: 15px; height: 15px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 600; color: var(--mode-fg, #5b6b67); }
+
+    .segGroup { display: flex; gap: 4px; background: var(--ring-track, #e3ece9); border-radius: 10px; padding: 3px; }
+    .segGroup button {
+      flex: 1; border: none; background: transparent; padding: 6px 4px; font-size: 11px; font-weight: 500;
+      color: var(--mode-fg, #5b6b67); border-radius: 8px; cursor: pointer; transition: background .15s ease, color .15s ease;
+    }
+    .segGroup button.active { background: var(--card-bg, #ffffff); color: var(--fg, #1f2a28); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+    .colorRow { display: flex; align-items: center; gap: 10px; }
+    .colorRow input[type="color"] { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
+    .swatches { display: flex; gap: 6px; flex: 1; }
+    .swatch {
+      width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+      transition: border-color .15s ease, transform .1s ease; padding: 0;
+    }
+    .swatch:hover { transform: scale(1.08); }
+    .swatch.active { border-color: var(--fg, #1f2a28); }
+
+    .settingsFoot { margin-top: auto; display: flex; gap: 8px; padding-top: 4px; }
+    .settingsFoot button { flex: 1; border: none; border-radius: 10px; padding: 9px 0; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .saveBtn { background: var(--accent, #4fae9c); color: #fff; }
+    .resetDefaultsBtn { background: transparent; color: var(--mode-fg, #5b6b67); border: 1px solid var(--btn-border, #dde8e5) !important; }
+    .resetDefaultsBtn:hover { background: var(--btn-bg-hover, #f1f6f4); }
+
+    @media (max-width: 260px) {
+      .card { max-width: 100%; height: 420px; }
+    }
+
+    /* ---------- Themes ---------- */
+    body.theme-light {
+      --bg: #f4f7f6;
+      --fg: #1f2a28;
+      --card-bg: #ffffff;
+      --tab-fg: #94a6a1;
+      --ring-track: #e3ece9;
+      --mode-fg: #5b6b67;
+      --btn-bg: #ffffff;
+      --btn-border: #dde8e5;
+      --btn-bg-hover: #f1f6f4;
+      --footer-fg: #a8b8b4;
+      --input-bg: #f7fbfa;
+      --success: #6fbf9b;
+      --danger: #e08585;
+      --blob-color: #e3f1ee;
+    }
+    body.theme-dark {
+      --bg: #10171a;
+      --fg: #e7f1ee;
+      --card-bg: #182022;
+      --tab-fg: #7c948e;
+      --ring-track: #243030;
+      --mode-fg: #93a8a3;
+      --btn-bg: #1d2729;
+      --btn-border: #2b3a3a;
+      --btn-bg-hover: #233030;
+      --footer-fg: #5e7470;
+      --input-bg: #1d2729;
+      --success: #4fae9c;
+      --danger: #d98a8a;
+      --blob-color: #1e2e2c;
+    }
+    body.theme-sunset {
+      --bg: #fdf3ec;
+      --fg: #4a3326;
+      --card-bg: #fffaf5;
+      --tab-fg: #bd9a7e;
+      --ring-track: #f1e1d2;
+      --mode-fg: #9c7c61;
+      --btn-bg: #fffaf5;
+      --btn-border: #f1e1d2;
+      --btn-bg-hover: #fcefe2;
+      --footer-fg: #cdb19a;
+      --input-bg: #fcefe2;
+      --success: #93a86a;
+      --danger: #d98a6a;
+      --blob-color: #f6e6d6;
+    }
+  </style>
+</head>
+<body class="theme-light">
+  <main class="card" role="region" aria-label="Park It — distraction parking">
+    <div class="blob"></div>
+    <div class="blob blobTwo"></div>
+
+    <!-- Settings gear -->
+    <button class="gearBtn" id="gearBtn" aria-label="Open settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="headerLeft">
+        <!-- Detailed leaf: layered body fill + outline + midrib + side veins -->
+        <svg class="leafMark" viewBox="0 0 32 32" aria-hidden="true">
+          <path class="leafBody" d="M16 4C9 4 4 10 4 17c0 6 4.5 11 12 11s12-5 12-11c0-7-5-13-12-13z"/>
+          <path class="leafOutline" d="M16 4C9 4 4 10 4 17c0 6 4.5 11 12 11s12-5 12-11c0-7-5-13-12-13z"/>
+          <path class="leafVein" d="M16 6.5V26"/>
+          <path class="leafVein" d="M16 11c-2.4 1-4.3 2.1-5.8 3.6"/>
+          <path class="leafVein" d="M16 15.5c-2.7 1-4.9 2.3-6.6 4.1"/>
+          <path class="leafVein" d="M16 20c-2.4 1-4.3 2.2-5.7 3.8"/>
+          <path class="leafVein" d="M16 11c2.4 1 4.3 2.1 5.8 3.6"/>
+          <path class="leafVein" d="M16 15.5c2.7 1 4.9 2.3 6.6 4.1"/>
+          <path class="leafVein" d="M16 20c2.4 1 4.3 2.2 5.7 3.8"/>
+        </svg>
+        <div class="headerText">
+          <div class="title">Park It</div>
+          <div class="counter"><span class="n" id="counterVal">0</span> thoughts parked · clears in <span id="resetIn">3d</span></div>
+          <div class="streak" id="streakNote">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2c3 4-1 5 2 9 2 3 1 6-2 7-3-1-4-4-2-7 1.5-2 .5-4-2-5 1 3-2 4-2 6 0 3 2 5 4 5"/>
+            </svg>
+            <span id="streakVal">0-day streak</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Capture input -->
+    <form class="captureRow" id="captureForm">
+      <input
+        class="captureInput"
+        id="captureInput"
+        type="text"
+        maxlength="200"
+        placeholder="What's on your mind? (press / to focus)"
+        autocomplete="off"
+      />
+      <button class="captureBtn" type="submit" aria-label="Park this thought">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M13 6l6 6-6 6"/>
+        </svg>
+      </button>
+    </form>
+
+    <!-- Quick tags for the thought about to be captured -->
+    <div class="tagRow" id="tagRow">
+      <button type="button" class="tagChip active" data-tag="note"><span class="dot" style="background:var(--tab-fg,#94a6a1)"></span>Note</button>
+      <button type="button" class="tagChip" data-tag="todo"><span class="dot"></span>To-do</button>
+      <button type="button" class="tagChip" data-tag="idea"><span class="dot"></span>Idea</button>
+      <button type="button" class="tagChip" data-tag="worry"><span class="dot"></span>Worry</button>
+    </div>
+
+    <!-- Filter -->
+    <div class="filterRow" id="filterRow">
+      <button type="button" class="filterChip active" data-filter="all">All</button>
+      <button type="button" class="filterChip" data-filter="todo">To-do</button>
+      <button type="button" class="filterChip" data-filter="idea">Idea</button>
+      <button type="button" class="filterChip" data-filter="worry">Worry</button>
+    </div>
+
+    <!-- List -->
+    <div class="listWrap" id="listWrap">
+      <div class="emptyState" id="emptyState">
+        <svg class="emptyIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3c-1 2-3 3-3 6a3 3 0 0 0 6 0c0-3-2-4-3-6z"/>
+          <path d="M8 14c-2 1-3 3-3 5h14c0-2-1-4-3-5"/>
+          <path d="M12 14v3"/>
+        </svg>
+        <p>Your mind is clear.</p>
+        <p class="small">Jot down a thought the moment it shows up — then get back to it.</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span class="footerNote">Swiftry</span>
+      <div class="footerActions">
+        <button class="footerActionBtn" id="copyAllBtn" type="button">Copy all</button>
+        <button class="footerActionBtn" id="clearAllBtn" type="button">Clear all</button>
+      </div>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="settingsPanel" id="settingsPanel" role="dialog" aria-label="Widget settings">
+      <div class="settingsHead">
+        <h2>Settings</h2>
+        <button class="closeBtn" id="closeSettingsBtn" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Theme</label>
+        <div class="segGroup" id="themeGroup">
+          <button data-theme="light">Calm</button>
+          <button data-theme="dark">Dark</button>
+          <button data-theme="sunset">Sunset</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Accent color</label>
+        <div class="colorRow">
+          <input type="color" id="accentInput" value="#4fae9c" />
+          <div class="swatches" id="swatchGroup">
+            <button class="swatch" style="background:#4fae9c" data-color="#4fae9c" aria-label="Sage teal"></button>
+            <button class="swatch" style="background:#7fa8d6" data-color="#7fa8d6" aria-label="Dusty blue"></button>
+            <button class="swatch" style="background:#a895c9" data-color="#a895c9" aria-label="Soft lilac"></button>
+            <button class="swatch" style="background:#e3a96d" data-color="#e3a96d" aria-label="Warm sand"></button>
+            <button class="swatch" style="background:#8fae6f" data-color="#8fae6f" aria-label="Muted olive"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settingsFoot">
+        <button class="resetDefaultsBtn" id="resetDefaultsBtn" type="button">Reset</button>
+        <button class="saveBtn" id="saveSettingsBtn" type="button">Done</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* =====================================================================
+       Park It — Swiftry
+       Capture an intrusive thought in a few seconds without losing focus,
+       optionally tagging it (To-do / Idea / Worry) for easier triage later.
+       Everything is stored locally (localStorage) — no Notion API call,
+       no account, no external request.
+
+       Configurable via URL query params:
+         ?theme=light       → light | dark | sunset (default light, "Calm")
+         &accent=%234fae9c  → hex color, URL-encoded # as %23
+       In-widget gear-icon settings are saved to localStorage and take
+       priority over the URL after first use.
+
+       The thought list and counter automatically clear every 3 days.
+       A lightweight "streak" counts consecutive days with at least one
+       thought parked — purely a positive nudge, never shown as a guilt
+       trip if it resets to 0.
+       ===================================================================== */
+    (function () {
+      const SETTINGS_KEY = "swiftry-parkit-settings";
+      const DATA_KEY      = "swiftry-parkit-data";
+      const CYCLE_MS      = 3 * 24 * 60 * 60 * 1000; // 3 days
+      const DAY_MS        = 24 * 60 * 60 * 1000;
+
+      const VALID_THEMES = ["light", "dark", "sunset"];
+      const VALID_TAGS   = ["note", "todo", "idea", "worry"];
+      const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+      const DEFAULTS = { theme: "light", accent: "#4fae9c" };
+
+      // ---------- appearance settings: URL first, then localStorage override ----------
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = {
+        theme: VALID_THEMES.includes((params.get("theme") || "").toLowerCase())
+          ? params.get("theme").toLowerCase() : DEFAULTS.theme,
+        accent: HEX_RE.test(params.get("accent") || "") ? params.get("accent") : DEFAULTS.accent
+      };
+
+      let settings = { ...fromUrl };
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+        if (saved && typeof saved === "object") {
+          settings = {
+            theme: VALID_THEMES.includes(saved.theme) ? saved.theme : fromUrl.theme,
+            accent: HEX_RE.test(saved.accent || "") ? saved.accent : fromUrl.accent
+          };
+        }
+      } catch (_) { /* corrupted storage — ignore */ }
+
+      const persistSettings = () => {
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+        catch (_) { /* storage unavailable — ignore */ }
+      };
+
+      // ---------- thought data + 3-day auto-reset cycle + streak ----------
+      // streak tracking is independent of the 3-day wipe cycle: it lives
+      // outside `data` so clearing the thought list never resets the streak.
+      const STREAK_KEY = "swiftry-parkit-streak"; // { count, lastDay } — lastDay = "YYYY-MM-DD"
+
+      const todayKey = () => {
+        const d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      };
+      const dayKeyMinus = (n) => {
+        const d = new Date();
+        d.setDate(d.getDate() - n);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      };
+
+      let streak = { count: 0, lastDay: null };
+      try {
+        const raw = JSON.parse(localStorage.getItem(STREAK_KEY) || "null");
+        if (raw && typeof raw.count === "number") streak = raw;
+      } catch (_) { /* ignore */ }
+
+      const persistStreak = () => {
+        try { localStorage.setItem(STREAK_KEY, JSON.stringify(streak)); }
+        catch (_) { /* ignore */ }
+      };
+
+      // Call this whenever a thought is captured. Increments the streak
+      // once per calendar day; if a day was skipped entirely, it resets
+      // to 1 rather than continuing — no partial credit, but also no
+      // shaming language anywhere in the UI if it drops to 0.
+      const registerActivityToday = () => {
+        const today = todayKey();
+        if (streak.lastDay === today) return; // already counted today
+        const yesterday = dayKeyMinus(1);
+        streak.count = (streak.lastDay === yesterday) ? streak.count + 1 : 1;
+        streak.lastDay = today;
+        persistStreak();
+      };
+
+      const loadData = () => {
+        try {
+          const raw = JSON.parse(localStorage.getItem(DATA_KEY) || "null");
+          if (raw && Array.isArray(raw.thoughts) && typeof raw.cycleStart === "number") {
+            // migrate thoughts saved before tags existed
+            raw.thoughts.forEach(t => { if (!VALID_TAGS.includes(t.tag)) t.tag = "note"; });
+            return raw;
+          }
+        } catch (_) { /* corrupted — fall through */ }
+        return { thoughts: [], cycleStart: Date.now() };
+      };
+
+      let data = loadData();
+      if (Date.now() - data.cycleStart >= CYCLE_MS) {
+        data = { thoughts: [], cycleStart: Date.now() };
+      }
+
+      const persistData = () => {
+        try { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
+        catch (_) { /* ignore */ }
+      };
+      persistData();
+
+      // ---------- DOM refs ----------
+      const $captureForm  = document.getElementById("captureForm");
+      const $captureInput = document.getElementById("captureInput");
+      const $captureRow    = document.getElementById("captureForm");
+      const $tagRow         = document.getElementById("tagRow");
+      const $filterRow      = document.getElementById("filterRow");
+      const $listWrap      = document.getElementById("listWrap");
+      const $emptyState    = document.getElementById("emptyState");
+      const $counterVal    = document.getElementById("counterVal");
+      const $resetIn       = document.getElementById("resetIn");
+      const $streakVal      = document.getElementById("streakVal");
+      const $streakNote     = document.getElementById("streakNote");
+      const $copyAllBtn    = document.getElementById("copyAllBtn");
+      const $clearAllBtn   = document.getElementById("clearAllBtn");
+
+      const $gearBtn        = document.getElementById("gearBtn");
+      const $settingsPanel  = document.getElementById("settingsPanel");
+      const $closeSettings  = document.getElementById("closeSettingsBtn");
+      const $themeGroup     = document.getElementById("themeGroup");
+      const $accentInput    = document.getElementById("accentInput");
+      const $swatchGroup    = document.getElementById("swatchGroup");
+      const $resetDefaults  = document.getElementById("resetDefaultsBtn");
+      const $saveSettings   = document.getElementById("saveSettingsBtn");
+
+      let selectedTag = "note";
+      let activeFilter = "all";
+
+      // ---------- helpers ----------
+      const applyTheme = (theme) => {
+        VALID_THEMES.forEach(t => document.body.classList.remove("theme-" + t));
+        document.body.classList.add("theme-" + theme);
+      };
+      const setAccent = (hex) => {
+        document.documentElement.style.setProperty("--accent", hex);
+      };
+
+      const escapeHtml = (str) => {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      };
+
+      const formatTime = (ts) => {
+        const d = new Date(ts);
+        return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      };
+
+      const daysLeftLabel = () => {
+        const msLeft = Math.max(0, CYCLE_MS - (Date.now() - data.cycleStart));
+        const daysLeft = Math.ceil(msLeft / DAY_MS);
+        if (daysLeft <= 0) return "today";
+        if (daysLeft === 1) return "1d";
+        return daysLeft + "d";
+      };
+
+      const TAG_LABEL = { note: "Note", todo: "To-do", idea: "Idea", worry: "Worry" };
+
+      // ---------- rendering ----------
+      const renderStreak = () => {
+        const n = streak.count;
+        $streakVal.textContent = n === 1 ? "1-day streak" : n + "-day streak";
+        $streakNote.classList.toggle("lit", n > 0);
+      };
+
+      const render = () => {
+        $counterVal.textContent = data.thoughts.length;
+        $resetIn.textContent = daysLeftLabel();
+        renderStreak();
+
+        const visible = activeFilter === "all"
+          ? data.thoughts
+          : data.thoughts.filter(t => t.tag === activeFilter);
+
+        $listWrap.innerHTML = "";
+        if (visible.length === 0) {
+          $listWrap.appendChild($emptyState);
+          return;
+        }
+        const ordered = [...visible].sort((a, b) => b.ts - a.ts);
+        ordered.forEach((t) => {
+          const row = document.createElement("div");
+          row.className = "thought" + (t.done ? " done" : "");
+          row.dataset.id = t.id;
+          row.dataset.tag = t.tag;
+          row.innerHTML = `
+            <button class="thoughtCheck" aria-label="Mark as handled">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                   stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+            <div class="thoughtBody">
+              <div class="thoughtText">${escapeHtml(t.text)}</div>
+              <div class="thoughtTime">${formatTime(t.ts)} · ${TAG_LABEL[t.tag]}</div>
+            </div>
+            <button class="deleteBtn" aria-label="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                   stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          `;
+          $listWrap.appendChild(row);
+        });
+      };
+
+      // ---------- quick-tag selection (for the thought about to be captured) ----------
+      $tagRow.addEventListener("click", (e) => {
+        const chip = e.target.closest(".tagChip");
+        if (!chip) return;
+        selectedTag = chip.dataset.tag;
+        Array.from($tagRow.children).forEach(c => c.classList.toggle("active", c === chip));
+      });
+
+      // ---------- filter selection ----------
+      $filterRow.addEventListener("click", (e) => {
+        const chip = e.target.closest(".filterChip");
+        if (!chip) return;
+        activeFilter = chip.dataset.filter;
+        Array.from($filterRow.children).forEach(c => c.classList.toggle("active", c === chip));
+        render();
+      });
+
+      // ---------- capture ----------
+      $captureForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = $captureInput.value.trim();
+        if (!text) return;
+
+        data.thoughts.push({
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          text: text.slice(0, 200),
+          ts: Date.now(),
+          tag: selectedTag,
+          done: false
+        });
+        persistData();
+        registerActivityToday();
+        $captureInput.value = "";
+        render();
+
+        $captureRow.classList.add("flash");
+        setTimeout(() => $captureRow.classList.remove("flash"), 350);
+      });
+
+      // ---------- keyboard shortcut: "/" focuses the capture input ----------
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "/") return;
+        if (e.target && /input|textarea/i.test(e.target.tagName)) return; // don't hijack while already typing
+        e.preventDefault();
+        $captureInput.focus();
+      });
+
+      // ---------- per-thought actions ----------
+      $listWrap.addEventListener("click", (e) => {
+        const row = e.target.closest(".thought");
+        if (!row) return;
+        const id = row.dataset.id;
+
+        if (e.target.closest(".thoughtCheck")) {
+          const t = data.thoughts.find(t => t.id === id);
+          if (t) { t.done = !t.done; persistData(); render(); }
+        } else if (e.target.closest(".deleteBtn")) {
+          data.thoughts = data.thoughts.filter(t => t.id !== id);
+          persistData();
+          render();
+        }
+      });
+
+      // ---------- copy all (active thoughts only, respecting current filter) ----------
+      const buildExportText = () => {
+        const scoped = activeFilter === "all" ? data.thoughts : data.thoughts.filter(t => t.tag === activeFilter);
+        const active = scoped.filter(t => !t.done).sort((a, b) => a.ts - b.ts);
+        return active.map(t => `[${formatTime(t.ts)}] (${TAG_LABEL[t.tag]}) ${t.text}`).join("\n");
+      };
+
+      const flashCopied = () => {
+        $copyAllBtn.textContent = "Copied!";
+        $copyAllBtn.classList.add("copied");
+        setTimeout(() => {
+          $copyAllBtn.textContent = "Copy all";
+          $copyAllBtn.classList.remove("copied");
+        }, 1400);
+      };
+
+      $copyAllBtn.addEventListener("click", async () => {
+        const text = buildExportText();
+        if (!text) return;
+        try {
+          await navigator.clipboard.writeText(text);
+          flashCopied();
+        } catch (_) {
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            flashCopied();
+          } catch (_) { /* both methods failed — fail silently */ }
+        }
+      });
+
+      $clearAllBtn.addEventListener("click", () => {
+        if (data.thoughts.length === 0) return;
+        data.thoughts = [];
+        persistData();
+        render();
+      });
+
+      // ---------- settings panel ----------
+      let draft = { ...settings };
+
+      const syncPanelUI = () => {
+        Array.from($themeGroup.children).forEach(btn =>
+          btn.classList.toggle("active", btn.dataset.theme === draft.theme));
+        $accentInput.value = draft.accent;
+        Array.from($swatchGroup.children).forEach(sw =>
+          sw.classList.toggle("active", sw.dataset.color.toLowerCase() === draft.accent.toLowerCase()));
+      };
+
+      const openPanel = () => {
+        draft = { ...settings };
+        syncPanelUI();
+        $settingsPanel.classList.add("open");
+        $gearBtn.classList.add("open");
+      };
+      const closePanel = () => {
+        $settingsPanel.classList.remove("open");
+        $gearBtn.classList.remove("open");
+      };
+
+      $gearBtn.addEventListener("click", () => {
+        if ($settingsPanel.classList.contains("open")) closePanel();
+        else openPanel();
+      });
+      $closeSettings.addEventListener("click", closePanel);
+
+      $themeGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-theme]");
+        if (!btn) return;
+        draft.theme = btn.dataset.theme;
+        syncPanelUI();
+        applyTheme(draft.theme);
+      });
+
+      $accentInput.addEventListener("input", () => {
+        draft.accent = $accentInput.value;
+        syncPanelUI();
+        setAccent(draft.accent);
+      });
+      $swatchGroup.addEventListener("click", (e) => {
+        const sw = e.target.closest("button[data-color]");
+        if (!sw) return;
+        draft.accent = sw.dataset.color;
+        syncPanelUI();
+        setAccent(draft.accent);
+      });
+
+      $resetDefaults.addEventListener("click", () => {
+        draft = { ...DEFAULTS };
+        syncPanelUI();
+        applyTheme(draft.theme);
+        setAccent(draft.accent);
+      });
+
+      $saveSettings.addEventListener("click", () => {
+        settings = { ...draft };
+        persistSettings();
+        closePanel();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!$settingsPanel.classList.contains("open")) return;
+        if (e.target === $gearBtn || $gearBtn.contains(e.target)) return;
+        if ($settingsPanel.contains(e.target)) return;
+        closePanel();
+      });
+
+      // ---------- periodic cycle check ----------
+      setInterval(() => {
+        if (Date.now() - data.cycleStart >= CYCLE_MS) {
+          data = { thoughts: [], cycleStart: Date.now() };
+          persistData();
+          render();
+        } else {
+          $resetIn.textContent = daysLeftLabel();
+        }
+      }, 5 * 60 * 1000);
+
+      // ---------- boot ----------
+      applyTheme(settings.theme);
+      setAccent(settings.accent);
+      render();
+    })();
+  </script>
+</body>
+</html>
