@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Content Streak — Swiftry</title>
+  <style>
+    /* ---------- Reset & base ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+
+    @font-face {
+      /* Using a system stack tuned for a condensed, high-contrast display
+         number — no external font request, so the widget stays a single
+         self-contained file with zero network dependency. */
+      font-family: "StreakDisplay";
+      src: local("Charter Bold"), local("Georgia Bold");
+    }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg, #191512);
+      color: var(--fg, #f3ece3);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+      transition: background .2s ease, color .2s ease;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      background: var(--card-bg, #221d19);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.03) inset,
+        0 16px 40px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: background .2s ease;
+      border: 1px solid var(--card-border, rgba(255,255,255,0.05));
+    }
+
+    /* Faint warm glow behind the card, like studio key-light spill */
+    .glow {
+      position: absolute;
+      top: -40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, var(--accent, #ff8a3d) 0%, transparent 70%);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(10px);
+    }
+
+    /* ---------- Header ---------- */
+    .header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-right: 28px;
+    }
+    .eyebrow {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent, #ff8a3d);
+      opacity: 0.85;
+    }
+    .title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--fg, #f3ece3);
+      letter-spacing: -0.01em;
+      margin-top: 1px;
+    }
+
+    .gearBtn {
+      position: absolute;
+      top: 0px;
+      right: -2px;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--tab-fg, #a89a8c);
+      opacity: 0.7;
+      transition: opacity .15s ease, background .15s ease, transform .2s ease;
+      z-index: 4;
+    }
+    .gearBtn:hover { opacity: 1; background: var(--btn-bg-hover, rgba(255,255,255,0.06)); }
+    .gearBtn:active { transform: scale(0.92); }
+    .gearBtn svg { width: 15px; height: 15px; }
+    .gearBtn.open { transform: rotate(40deg); opacity: 1; }
+
+    /* ---------- Hero streak number — the signature element ---------- */
+    .heroStreak {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 0 2px;
+    }
+    .heroNumber {
+      font-family: Georgia, "Charter", "Times New Roman", serif;
+      font-weight: 700;
+      font-size: 64px;
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      color: var(--fg, #f3ece3);
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 24px var(--accent-glow, rgba(255,138,61,0.25));
+    }
+    .heroUnit {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent, #ff8a3d);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding-bottom: 8px;
+    }
+    .heroSub {
+      text-align: center;
+      font-size: 11px;
+      color: var(--tab-fg, #a89a8c);
+      margin-top: -6px;
+    }
+    .heroSub b { color: var(--fg, #f3ece3); font-weight: 700; }
+
+    .encourage {
+      position: relative;
+      z-index: 1;
+      font-size: 11.5px;
+      color: var(--mode-fg, #c4b6a8);
+      text-align: center;
+      padding: 0 6px;
+      line-height: 1.45;
+    }
+    .encourage .spark { color: var(--accent, #ff8a3d); font-weight: 700; }
+
+    /* ---------- Chain heatmap: the signature visual ---------- */
+    .chainWrap { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; }
+    .chainDayLabels {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      font-size: 8.5px;
+      font-weight: 600;
+      color: var(--tab-fg, #8a7c6e);
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+    .chainGrid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      position: relative;
+    }
+    .chainCell {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 7px;
+      background: var(--cell-empty, #2c2520);
+      transition: transform .08s ease;
+    }
+    .chainCell.future {
+      background: transparent;
+      border: 1px dashed var(--cell-empty, #382f28);
+    }
+    .chainCell.today {
+      box-shadow: 0 0 0 1.5px var(--accent, #ff8a3d) inset;
+    }
+    .chainCell.multi {
+      background: conic-gradient(
+        var(--seg1, #ef5fa3) 0deg 120deg,
+        var(--seg2, #ef4444) 120deg 240deg,
+        var(--seg3, #c084fc) 240deg 360deg
+      );
+    }
+    /* The "chain link" mark: a small bright notch drawn on cells that are
+       part of the CURRENT active streak run, distinct from older posted
+       days elsewhere in the grid which stay in their plain platform color.
+       This is what makes the current streak read as one continuous chain
+       rather than just "a bunch of colored squares". */
+    .chainCell.linked::after {
+      content: "";
+      position: absolute;
+      inset: -2.5px;
+      border-radius: 9px;
+      border: 1.5px solid var(--accent, #ff8a3d);
+      pointer-events: none;
+    }
+
+    /* ---------- Legend ---------- */
+    .legend {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      font-size: 9.5px;
+      color: var(--mode-fg, #c4b6a8);
+    }
+    .legendItem { display: inline-flex; align-items: center; gap: 4px; }
+    .legendDot { width: 7px; height: 7px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ---------- "I posted today" button + platform picker ---------- */
+    .postBtn {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      border: none;
+      border-radius: 13px;
+      padding: 12px 0;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent, #ff8a3d);
+      color: #1a1410;
+      transition: opacity .15s ease, transform .05s ease;
+      letter-spacing: 0.01em;
+    }
+    .postBtn:hover { opacity: 0.92; }
+    .postBtn:active { transform: scale(0.985); }
+    .postBtn.already {
+      background: var(--cell-empty, #2c2520);
+      color: var(--mode-fg, #c4b6a8);
+    }
+
+    .platformPicker {
+      position: relative;
+      z-index: 1;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .platformPicker.open { display: flex; }
+
+    .platformRow { display: flex; flex-direction: column; gap: 6px; }
+    .platformChip {
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 8px 10px;
+      border-radius: 11px;
+      border: 1.5px solid var(--btn-border, rgba(255,255,255,0.1));
+      background: var(--card-bg, #221d19);
+      color: var(--mode-fg, #c4b6a8);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .12s ease, border-color .12s ease, color .12s ease;
+    }
+    .platformChip .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .platformChip.active { border-color: var(--chip-color, currentColor); color: var(--chip-color, currentColor); background: var(--chip-bg, rgba(255,255,255,0.04)); }
+
+    /* Per-platform inline fields shown under an active chip: a name
+       override for the "Other" slot specifically (per-day, not a
+       permanent rename), and a free-text note for what was posted —
+       available for every platform, not just "Other". */
+    .platformExtra {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding-left: 4px;
+    }
+    .platformExtra.open { display: flex; }
+    .platformExtra input,
+    .platformExtra textarea {
+      width: 100%;
+      font: inherit;
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 9px;
+      border: 1px solid var(--btn-border, rgba(255,255,255,0.1));
+      background: var(--cell-empty, #2c2520);
+      color: var(--fg, #f3ece3);
+      outline: none;
+      resize: none;
+    }
+    .platformExtra input:focus,
+    .platformExtra textarea:focus { border-color: var(--accent, #ff8a3d); }
+    .platformExtra input::placeholder,
+    .platformExtra textarea::placeholder { color: var(--tab-fg, #8a7c6e); }
+    .platformExtra textarea { min-height: 44px; line-height: 1.4; font-size: 11.5px; }
+
+    .confirmRow { position: relative; z-index: 1; display: none; gap: 6px; }
+    .confirmRow.open { display: flex; }
+    .confirmRow button {
+      flex: 1;
+      border: none;
+      border-radius: 11px;
+      padding: 9px 0;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .confirmBtn { background: var(--accent, #ff8a3d); color: #1a1410; }
+    .cancelBtn { background: transparent; color: var(--mode-fg, #c4b6a8); border: 1px solid var(--btn-border, rgba(255,255,255,0.1)) !important; }
+
+    /* ---------- Footer ---------- */
+    .footer {
+      position: relative;
+      z-index: 1;
+      font-size: 9.5px;
+      color: var(--footer-fg, #5e5347);
+      text-align: center;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ---------- Settings panel ---------- */
+    .settingsPanel {
+      position: absolute;
+      inset: 0;
+      background: var(--card-bg, #221d19);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition: opacity .16s ease, transform .16s ease, visibility .16s;
+      z-index: 5;
+      overflow-y: auto;
+    }
+    .settingsPanel.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .settingsHead { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--card-bg, #221d19); }
+    .settingsHead h2 { font-size: 13px; font-weight: 700; margin: 0; color: var(--fg, #f3ece3); }
+    .closeBtn {
+      width: 24px; height: 24px; border: none; background: transparent; cursor: pointer;
+      color: var(--tab-fg, #a89a8c); display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+    }
+    .closeBtn:hover { background: var(--btn-bg-hover, rgba(255,255,255,0.06)); }
+    .closeBtn svg { width: 15px; height: 15px; }
+
+    .settingsSection { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--divider, rgba(255,255,255,0.07)); }
+    .settingsSection:last-of-type { border-bottom: none; }
+    .sectionLabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent, #ff8a3d); opacity: 0.85; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 600; color: var(--mode-fg, #c4b6a8); }
+
+    .segGroup { display: flex; gap: 4px; background: var(--cell-empty, #2c2520); border-radius: 11px; padding: 3px; }
+    .segGroup button {
+      flex: 1; border: none; background: transparent; padding: 6px 4px; font-size: 11px; font-weight: 600;
+      color: var(--mode-fg, #c4b6a8); border-radius: 8px; cursor: pointer; transition: background .15s ease, color .15s ease;
+    }
+    .segGroup button.active { background: var(--card-bg, #221d19); color: var(--fg, #f3ece3); box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset; }
+
+    .colorRow { display: flex; align-items: center; gap: 10px; }
+    .colorRow input[type="color"] { width: 32px; height: 32px; border: none; border-radius: 9px; cursor: pointer; padding: 0; background: none; flex-shrink: 0; }
+    .swatches { display: flex; gap: 6px; flex: 1; }
+    .swatch {
+      width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+      transition: border-color .15s ease, transform .1s ease; padding: 0;
+    }
+    .swatch:hover { transform: scale(1.08); }
+    .swatch.active { border-color: var(--fg, #f3ece3); }
+
+    .platformRow { display: flex; align-items: center; gap: 8px; }
+    .platformRow input[type="color"] { width: 26px; height: 26px; border: none; border-radius: 8px; cursor: pointer; padding: 0; flex-shrink: 0; }
+    .platformRow input[type="text"] {
+      flex: 1;
+      font: inherit;
+      font-size: 12px;
+      padding: 7px 9px;
+      border-radius: 9px;
+      border: 1px solid var(--btn-border, rgba(255,255,255,0.1));
+      background: var(--cell-empty, #2c2520);
+      color: var(--fg, #f3ece3);
+      outline: none;
+    }
+    .platformRow input[type="text"]:focus { border-color: var(--accent, #ff8a3d); }
+
+    .settingsFoot { display: flex; gap: 8px; padding-top: 4px; position: sticky; bottom: 0; background: var(--card-bg, #221d19); }
+    .settingsFoot button { flex: 1; border: none; border-radius: 11px; padding: 9px 0; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .saveBtn { background: var(--accent, #ff8a3d); color: #1a1410; }
+    .resetDefaultsBtn { background: transparent; color: var(--mode-fg, #c4b6a8); border: 1px solid var(--btn-border, rgba(255,255,255,0.1)) !important; }
+    .resetDefaultsBtn:hover { background: var(--btn-bg-hover, rgba(255,255,255,0.06)); }
+    .dangerBtn {
+      background: transparent; color: var(--danger, #ef6b5e); border: 1px solid var(--btn-border, rgba(255,255,255,0.1)) !important;
+      border-radius: 11px; padding: 8px 0; font-size: 11px; font-weight: 700; cursor: pointer; width: 100%;
+    }
+    .dangerBtn:hover { background: var(--btn-bg-hover, rgba(255,255,255,0.06)); }
+
+    @media (max-width: 260px) {
+      .card { max-width: 100%; }
+      .heroNumber { font-size: 50px; }
+    }
+
+    /* ---------- Theme variants — all share the studio-warm identity,
+       light/sunset soften the same palette rather than reverting to a
+       generic SaaS light mode, to keep the signature consistent. ---------- */
+    body.theme-dark {
+      --bg: #191512; --fg: #f3ece3; --card-bg: #221d19; --card-border: rgba(255,255,255,0.05);
+      --tab-fg: #a89a8c; --cell-empty: #2c2520; --mode-fg: #c4b6a8; --btn-bg: #221d19;
+      --btn-border: rgba(255,255,255,0.1); --btn-bg-hover: rgba(255,255,255,0.06);
+      --footer-fg: #5e5347; --danger: #ef6b5e; --divider: rgba(255,255,255,0.07);
+      --accent-glow: rgba(255,138,61,0.25);
+    }
+    body.theme-light {
+      --bg: #f4ede3; --fg: #2c2218; --card-bg: #fffaf2; --card-border: rgba(0,0,0,0.04);
+      --tab-fg: #9a8a78; --cell-empty: #ece1d2; --mode-fg: #6b5d4d; --btn-bg: #fffaf2;
+      --btn-border: rgba(0,0,0,0.08); --btn-bg-hover: #f3e9da;
+      --footer-fg: #b3a18c; --danger: #d9534f; --divider: rgba(0,0,0,0.06);
+      --accent-glow: rgba(255,138,61,0.18);
+    }
+    body.theme-sunset {
+      --bg: #2b1610; --fg: #ffe8d6; --card-bg: #3a1f16; --card-border: rgba(255,255,255,0.06);
+      --tab-fg: #d6a98c; --cell-empty: #432519; --mode-fg: #e3bda3; --btn-bg: #3a1f16;
+      --btn-border: rgba(255,255,255,0.12); --btn-bg-hover: rgba(255,255,255,0.08);
+      --footer-fg: #7a4a36; --danger: #ff8a6b; --divider: rgba(255,255,255,0.08);
+      --accent-glow: rgba(255,138,61,0.3);
+    }
+  </style>
+</head>
+<body class="theme-dark">
+  <main class="card" role="region" aria-label="Posting streak tracker">
+    <div class="glow"></div>
+
+    <!-- Settings gear -->
+    <button class="gearBtn" id="gearBtn" aria-label="Open settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <div class="eyebrow">Posting Streak</div>
+        <div class="title">Content Streak</div>
+      </div>
+    </div>
+
+    <!-- Hero streak number — the signature focal point -->
+    <div class="heroStreak">
+      <span class="heroNumber" id="currentStreakVal">0</span>
+      <span class="heroUnit" id="currentStreakUnit">days</span>
+    </div>
+    <div class="heroSub">Best run: <b id="bestStreakVal">0 days</b></div>
+
+    <div class="encourage" id="encourageNote"></div>
+
+    <!-- Chain heatmap -->
+    <div class="chainWrap">
+      <div class="chainDayLabels" id="chainDayLabels"></div>
+      <div class="chainGrid" id="chainGrid"></div>
+      <div class="legend" id="legendRow"></div>
+    </div>
+
+    <!-- Post button + platform picker -->
+    <button class="postBtn" id="postBtn">I posted today</button>
+    <div class="platformPicker" id="platformPicker"></div>
+    <div class="confirmRow" id="confirmRow">
+      <button type="button" class="cancelBtn" id="cancelPostBtn">Cancel</button>
+      <button type="button" class="confirmBtn" id="confirmPostBtn">Log it</button>
+    </div>
+
+    <div class="footer">Swiftry</div>
+
+    <!-- Settings panel -->
+    <div class="settingsPanel" id="settingsPanel" role="dialog" aria-label="Widget settings">
+      <div class="settingsHead">
+        <h2>Settings</h2>
+        <button class="closeBtn" id="closeSettingsBtn" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="settingsSection">
+        <div class="sectionLabel">Appearance</div>
+        <div class="field">
+          <label>Theme</label>
+          <div class="segGroup" id="themeGroup">
+            <button data-theme="dark">Studio</button>
+            <button data-theme="light">Paper</button>
+            <button data-theme="sunset">Ember</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Accent color</label>
+          <div class="colorRow">
+            <input type="color" id="accentInput" value="#ff8a3d" />
+            <div class="swatches" id="swatchGroup">
+              <button class="swatch" style="background:#ff8a3d" data-color="#ff8a3d" aria-label="Ember orange"></button>
+              <button class="swatch" style="background:#06b6d4" data-color="#06b6d4" aria-label="Cyan"></button>
+              <button class="swatch" style="background:#22c55e" data-color="#22c55e" aria-label="Green"></button>
+              <button class="swatch" style="background:#a855f7" data-color="#a855f7" aria-label="Purple"></button>
+              <button class="swatch" style="background:#ef4444" data-color="#ef4444" aria-label="Red"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="sectionLabel">Platforms</div>
+        <div class="field" id="platformFields"></div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="sectionLabel">Calendar</div>
+        <div class="field">
+          <label>Weeks shown</label>
+          <div class="segGroup" id="weeksGroup">
+            <button data-weeks="4">4 weeks</button>
+            <button data-weeks="5">5 weeks</button>
+            <button data-weeks="6">6 weeks</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Week starts on</label>
+          <div class="segGroup" id="weekStartGroup">
+            <button data-weekstart="sunday">Sunday</button>
+            <button data-weekstart="monday">Monday</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="sectionLabel">Data</div>
+        <button type="button" class="dangerBtn" id="resetDataBtn">Reset all posting history</button>
+      </div>
+
+      <div class="settingsFoot">
+        <button class="resetDefaultsBtn" id="resetDefaultsBtn" type="button">Reset all settings</button>
+        <button class="saveBtn" id="saveSettingsBtn" type="button">Done</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* =====================================================================
+       Content Streak — Swiftry
+       A configurable posting heatmap for content creators, styled as a
+       warm "studio" identity: the current streak reads as an unbroken
+       chain of linked days rather than a flat grid of colored squares.
+
+       Configurable via URL query params (appearance only — platform/
+       calendar setup is configured through the in-widget gear icon):
+         ?theme=dark        → dark ("Studio") | light ("Paper") | sunset ("Ember")
+         &accent=%23ff8a3d  → hex color, URL-encoded # as %23
+       ===================================================================== */
+    (function () {
+      const SETTINGS_KEY = "swiftry-streak-settings";
+      const DATA_KEY      = "swiftry-streak-data";
+
+      const VALID_THEMES = ["light", "dark", "sunset"];
+      const PLATFORM_SLOTS = ["p1", "p2", "p3", "p4"];
+      const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+      const DEFAULTS = {
+        theme: "dark",
+        accent: "#ff8a3d",
+        weeks: 5,
+        weekStart: "sunday",
+        platforms: {
+          p1: { name: "TikTok",    color: "#ef5fa3" },
+          p2: { name: "YouTube",   color: "#ef4444" },
+          p3: { name: "Instagram", color: "#c084fc" },
+          p4: { name: "Other",     color: "#6b7280" }
+        }
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const urlTheme = (params.get("theme") || "").toLowerCase();
+      const urlAccent = params.get("accent") || "";
+
+      let settings = JSON.parse(JSON.stringify(DEFAULTS));
+      if (VALID_THEMES.includes(urlTheme)) settings.theme = urlTheme;
+      if (HEX_RE.test(urlAccent)) settings.accent = urlAccent;
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+        if (saved && typeof saved === "object") {
+          settings.theme = VALID_THEMES.includes(saved.theme) ? saved.theme : settings.theme;
+          settings.accent = HEX_RE.test(saved.accent || "") ? saved.accent : settings.accent;
+          settings.weeks = [4, 5, 6].includes(saved.weeks) ? saved.weeks : settings.weeks;
+          settings.weekStart = ["sunday", "monday"].includes(saved.weekStart) ? saved.weekStart : settings.weekStart;
+          if (saved.platforms && typeof saved.platforms === "object") {
+            PLATFORM_SLOTS.forEach(slot => {
+              const p = saved.platforms[slot];
+              if (p && typeof p.name === "string" && HEX_RE.test(p.color || "")) {
+                settings.platforms[slot] = { name: p.name.slice(0, 20) || DEFAULTS.platforms[slot].name, color: p.color };
+              }
+            });
+          }
+        }
+      } catch (_) { /* corrupted storage — fall back to defaults/URL */ }
+
+      const persistSettings = () => {
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+        catch (_) { /* ignore */ }
+      };
+
+      // notes: { "YYYY-MM-DD": { "p1": { note: "..." }, "p4": { label: "Facebook", note: "..." } } }
+      // "label" only applies to the "Other" slot (p4) — a per-day display
+      // name distinct from the slot's permanent settings name. "note" is
+      // available on every platform: a free-text description of that
+      // day's post on that specific platform.
+      let postData = { days: {}, notes: {} };
+      let migratedFromOldFormat = false;
+      try {
+        const raw = JSON.parse(localStorage.getItem(DATA_KEY) || "null");
+        if (raw && typeof raw.days === "object") {
+          let notes = (raw.notes && typeof raw.notes === "object") ? raw.notes : {};
+          // Migrate the older single-field "otherLabels" format
+          // ({ "YYYY-MM-DD": "Facebook" }) into the new per-platform shape.
+          if (raw.otherLabels && typeof raw.otherLabels === "object") {
+            Object.keys(raw.otherLabels).forEach(date => {
+              notes[date] = notes[date] || {};
+              notes[date].p4 = notes[date].p4 || {};
+              if (!notes[date].p4.label) notes[date].p4.label = raw.otherLabels[date];
+            });
+            migratedFromOldFormat = true;
+          }
+          postData = { days: raw.days, notes };
+        }
+      } catch (_) { /* ignore */ }
+
+      const persistPostData = () => {
+        try { localStorage.setItem(DATA_KEY, JSON.stringify(postData)); }
+        catch (_) { /* ignore */ }
+      };
+
+      // Write the migrated shape back immediately, so the old
+      // "otherLabels" field doesn't linger in storage untouched until the
+      // next time the person happens to log a post.
+      if (migratedFromOldFormat) persistPostData();
+
+      const dayKey = (d) =>
+        d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      const startOfDay = (d) => { const c = new Date(d); c.setHours(0, 0, 0, 0); return c; };
+      const todayKey = () => dayKey(startOfDay(new Date()));
+
+      const $currentStreakVal  = document.getElementById("currentStreakVal");
+      const $currentStreakUnit = document.getElementById("currentStreakUnit");
+      const $bestStreakVal     = document.getElementById("bestStreakVal");
+      const $encourageNote     = document.getElementById("encourageNote");
+      const $chainGrid         = document.getElementById("chainGrid");
+      const $chainDayLabels    = document.getElementById("chainDayLabels");
+      const $legendRow         = document.getElementById("legendRow");
+      const $postBtn           = document.getElementById("postBtn");
+      const $platformPicker    = document.getElementById("platformPicker");
+      const $confirmRow        = document.getElementById("confirmRow");
+      const $confirmPostBtn    = document.getElementById("confirmPostBtn");
+      const $cancelPostBtn     = document.getElementById("cancelPostBtn");
+
+      const $gearBtn        = document.getElementById("gearBtn");
+      const $settingsPanel  = document.getElementById("settingsPanel");
+      const $closeSettings  = document.getElementById("closeSettingsBtn");
+      const $themeGroup     = document.getElementById("themeGroup");
+      const $accentInput    = document.getElementById("accentInput");
+      const $swatchGroup    = document.getElementById("swatchGroup");
+      const $platformFields = document.getElementById("platformFields");
+      const $weeksGroup     = document.getElementById("weeksGroup");
+      const $weekStartGroup = document.getElementById("weekStartGroup");
+      const $resetDefaults  = document.getElementById("resetDefaultsBtn");
+      const $saveSettings   = document.getElementById("saveSettingsBtn");
+      const $resetDataBtn   = document.getElementById("resetDataBtn");
+
+      let pendingPlatforms = new Set();
+
+      const applyTheme = (theme) => {
+        VALID_THEMES.forEach(t => document.body.classList.remove("theme-" + t));
+        document.body.classList.add("theme-" + theme);
+      };
+      const setAccent = (hex) => {
+        document.documentElement.style.setProperty("--accent", hex);
+      };
+
+      const hasPostOn = (key) => Array.isArray(postData.days[key]) && postData.days[key].length > 0;
+
+      const computeCurrentStreak = () => {
+        let count = 0;
+        let cursor = startOfDay(new Date());
+        const todayHasPost = hasPostOn(dayKey(cursor));
+        if (!todayHasPost) cursor.setDate(cursor.getDate() - 1);
+        while (hasPostOn(dayKey(cursor))) {
+          count++;
+          cursor.setDate(cursor.getDate() - 1);
+        }
+        return count;
+      };
+
+      const computeBestStreak = () => {
+        const keys = Object.keys(postData.days).filter(k => hasPostOn(k)).sort();
+        if (keys.length === 0) return 0;
+        let best = 1, run = 1;
+        for (let i = 1; i < keys.length; i++) {
+          const prev = new Date(keys[i - 1]);
+          const curr = new Date(keys[i]);
+          const diffDays = Math.round((curr - prev) / (24 * 60 * 60 * 1000));
+          run = (diffDays === 1) ? run + 1 : 1;
+          best = Math.max(best, run);
+        }
+        return Math.max(best, computeCurrentStreak());
+      };
+
+      // Returns the set of date keys that belong to the CURRENT active
+      // streak run — used to mark "linked" chain cells in the heatmap.
+      const currentStreakDateKeys = () => {
+        const keys = new Set();
+        let cursor = startOfDay(new Date());
+        const todayHasPost = hasPostOn(dayKey(cursor));
+        if (!todayHasPost) cursor.setDate(cursor.getDate() - 1);
+        while (hasPostOn(dayKey(cursor))) {
+          keys.add(dayKey(cursor));
+          cursor.setDate(cursor.getDate() - 1);
+        }
+        return keys;
+      };
+
+      const encouragementFor = (streak) => {
+        if (streak === 0) return "Every chain starts with one link. Whenever you're ready.";
+        if (streak < 3) return `<span class="spark">${streak} days linked.</span> Keep the chain going.`;
+        if (streak < 7) return `<span class="spark">${streak} days unbroken!</span> You're building a real habit.`;
+        if (streak < 30) return `<span class="spark">${streak} days strong.</span> This is what consistency looks like.`;
+        return `<span class="spark">${streak} days!</span> That's a serious creative habit.`;
+      };
+
+      const renderDayLabels = () => {
+        const baseLabels = settings.weekStart === "monday"
+          ? ["M", "T", "W", "T", "F", "S", "S"]
+          : ["S", "M", "T", "W", "T", "F", "S"];
+        $chainDayLabels.innerHTML = baseLabels.map(l => `<span>${l}</span>`).join("");
+      };
+
+      const escapeHtml = (str) => {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      };
+
+      const renderLegend = () => {
+        $legendRow.innerHTML = PLATFORM_SLOTS.map(slot => {
+          const p = settings.platforms[slot];
+          return `<span class="legendItem"><span class="legendDot" style="background:${p.color}"></span>${escapeHtml(p.name)}</span>`;
+        }).join("");
+      };
+
+      const renderHeatmap = () => {
+        $chainGrid.innerHTML = "";
+        const today = startOfDay(new Date());
+        const linkedKeys = currentStreakDateKeys();
+
+        const weekStartOffset = settings.weekStart === "monday" ? 1 : 0;
+        const todayCol = (today.getDay() - weekStartOffset + 7) % 7;
+        const totalCells = settings.weeks * 7;
+        const cellsAfterTodayInRow = 6 - todayCol;
+
+        const gridEnd = new Date(today);
+        gridEnd.setDate(gridEnd.getDate() + cellsAfterTodayInRow);
+        const gridStart = new Date(gridEnd);
+        gridStart.setDate(gridStart.getDate() - (totalCells - 1));
+
+        for (let i = 0; i < totalCells; i++) {
+          const d = new Date(gridStart);
+          d.setDate(d.getDate() + i);
+          const key = dayKey(d);
+          const isToday = key === todayKey();
+          const isFuture = startOfDay(d) > today;
+          const platformSlots = Array.isArray(postData.days[key]) ? postData.days[key] : [];
+
+          const cell = document.createElement("div");
+          cell.className = "chainCell";
+          cell.dataset.date = key;
+
+          if (isFuture) {
+            cell.classList.add("future");
+          } else {
+            const dayNotes = postData.notes[key] || {};
+            const parts = platformSlots.map(slot => {
+              const slotNote = dayNotes[slot] || {};
+              const displayName = (slot === "p4" && slotNote.label) ? slotNote.label : (settings.platforms[slot]?.name || slot);
+              return slotNote.note ? `${displayName}: ${slotNote.note}` : displayName;
+            });
+            cell.title = key + (parts.length ? " — " + parts.join(" · ") : "");
+          }
+          if (isToday) cell.classList.add("today");
+          if (linkedKeys.has(key)) cell.classList.add("linked");
+
+          if (!isFuture && platformSlots.length === 1) {
+            cell.style.background = settings.platforms[platformSlots[0]]?.color || "#6b7280";
+          } else if (!isFuture && platformSlots.length > 1) {
+            cell.classList.add("multi");
+            const colors = platformSlots.slice(0, 3).map(slot => settings.platforms[slot]?.color || "#6b7280");
+            while (colors.length < 3) colors.push(colors[colors.length - 1]);
+            cell.style.setProperty("--seg1", colors[0]);
+            cell.style.setProperty("--seg2", colors[1]);
+            cell.style.setProperty("--seg3", colors[2]);
+          }
+
+          $chainGrid.appendChild(cell);
+        }
+      };
+
+      const renderPlatformPicker = () => {
+        $platformPicker.innerHTML = PLATFORM_SLOTS.map(slot => {
+          const p = settings.platforms[slot];
+          const extraFieldsHtml = slot === "p4"
+            ? `<input type="text" class="otherLabelField" data-slot="${slot}" maxlength="24" placeholder="Name this platform (e.g. Facebook)" autocomplete="off" />
+               <textarea class="noteField" data-slot="${slot}" maxlength="160" placeholder="What did you post? (optional)"></textarea>`
+            : `<textarea class="noteField" data-slot="${slot}" maxlength="160" placeholder="What did you post? (optional)"></textarea>`;
+          return `
+            <div class="platformRow">
+              <button type="button" class="platformChip" data-slot="${slot}" style="--chip-color:${p.color}">
+                <span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}
+              </button>
+              <div class="platformExtra" data-slot="${slot}">
+                ${extraFieldsHtml}
+              </div>
+            </div>`;
+        }).join("");
+      };
+
+      const render = () => {
+        const current = computeCurrentStreak();
+        const best = computeBestStreak();
+        $currentStreakVal.textContent = current;
+        $currentStreakUnit.textContent = current === 1 ? "day" : "days";
+        $bestStreakVal.textContent = best + (best === 1 ? " day" : " days");
+        $encourageNote.innerHTML = encouragementFor(current);
+        renderDayLabels();
+        renderLegend();
+        renderPlatformPicker();
+        renderHeatmap();
+
+        const postedToday = hasPostOn(todayKey());
+        $postBtn.textContent = postedToday ? "Posted today ✓ (tap to edit)" : "I posted today";
+        $postBtn.classList.toggle("already", postedToday);
+      };
+
+      // Pending per-platform label/note text while the picker is open,
+      // keyed by slot. Populated from existing data on open, and read
+      // back out (rather than re-querying possibly-stale DOM nodes) when
+      // the user confirms — this avoids relying on input elements that
+      // might get rebuilt mid-edit.
+      let pendingExtras = {}; // { p1: { note: "..." }, p4: { label: "...", note: "..." } }
+
+      const syncExtraVisibility = () => {
+        $platformPicker.querySelectorAll(".platformExtra").forEach(extra => {
+          extra.classList.toggle("open", pendingPlatforms.has(extra.dataset.slot));
+        });
+      };
+
+      const openPicker = () => {
+        const key = todayKey();
+        pendingPlatforms = new Set(postData.days[key] || []);
+        pendingExtras = JSON.parse(JSON.stringify(postData.notes[key] || {}));
+
+        $platformPicker.querySelectorAll(".platformChip").forEach(chip =>
+          chip.classList.toggle("active", pendingPlatforms.has(chip.dataset.slot)));
+
+        $platformPicker.querySelectorAll(".otherLabelField").forEach(input => {
+          input.value = (pendingExtras[input.dataset.slot] && pendingExtras[input.dataset.slot].label) || "";
+        });
+        $platformPicker.querySelectorAll(".noteField").forEach(textarea => {
+          textarea.value = (pendingExtras[textarea.dataset.slot] && pendingExtras[textarea.dataset.slot].note) || "";
+        });
+
+        syncExtraVisibility();
+        $platformPicker.classList.add("open");
+        $confirmRow.classList.add("open");
+      };
+      const closePicker = () => {
+        $platformPicker.classList.remove("open");
+        $confirmRow.classList.remove("open");
+      };
+
+      $postBtn.addEventListener("click", () => {
+        if ($platformPicker.classList.contains("open")) closePicker();
+        else openPicker();
+      });
+
+      $platformPicker.addEventListener("click", (e) => {
+        const chip = e.target.closest(".platformChip");
+        if (!chip) return;
+        const slot = chip.dataset.slot;
+        if (pendingPlatforms.has(slot)) pendingPlatforms.delete(slot);
+        else pendingPlatforms.add(slot);
+        chip.classList.toggle("active", pendingPlatforms.has(slot));
+        syncExtraVisibility();
+      });
+
+      // Keep pendingExtras in sync as the person types, so values survive
+      // even if something else triggers a re-render before "Log it".
+      $platformPicker.addEventListener("input", (e) => {
+        const slot = e.target.dataset.slot;
+        if (!slot) return;
+        pendingExtras[slot] = pendingExtras[slot] || {};
+        if (e.target.classList.contains("otherLabelField")) {
+          pendingExtras[slot].label = e.target.value.slice(0, 24);
+        } else if (e.target.classList.contains("noteField")) {
+          pendingExtras[slot].note = e.target.value.slice(0, 160);
+        }
+      });
+
+      $confirmPostBtn.addEventListener("click", () => {
+        const key = todayKey();
+        // Only fall back to "Other" as a default when the day has no
+        // existing entry at all (first-time log with nothing picked).
+        // If the user is editing an existing day and explicitly clears
+        // every chip, respect that and remove the day's entry entirely.
+        const hadExistingEntry = Array.isArray(postData.days[key]);
+        if (pendingPlatforms.size === 0) {
+          if (hadExistingEntry) {
+            delete postData.days[key];
+          } else {
+            postData.days[key] = ["p4"];
+          }
+        } else {
+          postData.days[key] = Array.from(pendingPlatforms);
+        }
+
+        // Persist label/note only for platforms still selected; drop any
+        // leftover extras for platforms the user unchecked.
+        const cleanedNotes = {};
+        pendingPlatforms.forEach(slot => {
+          const extra = pendingExtras[slot] || {};
+          const entry = {};
+          if (slot === "p4" && extra.label && extra.label.trim()) entry.label = extra.label.trim();
+          if (extra.note && extra.note.trim()) entry.note = extra.note.trim();
+          if (Object.keys(entry).length > 0) cleanedNotes[slot] = entry;
+        });
+        if (Object.keys(cleanedNotes).length > 0) {
+          postData.notes[key] = cleanedNotes;
+        } else {
+          delete postData.notes[key];
+        }
+
+        persistPostData();
+        closePicker();
+        render();
+      });
+
+      $cancelPostBtn.addEventListener("click", closePicker);
+
+      let draft = JSON.parse(JSON.stringify(settings));
+
+      const renderPlatformFields = () => {
+        $platformFields.innerHTML = PLATFORM_SLOTS.map(slot => {
+          const p = draft.platforms[slot];
+          return `<div class="platformRow">
+                    <input type="color" data-slot="${slot}" class="platformColorInput" value="${p.color}" />
+                    <input type="text" data-slot="${slot}" class="platformNameInput" value="${escapeHtml(p.name)}" maxlength="20" />
+                  </div>`;
+        }).join("");
+
+        $platformFields.querySelectorAll(".platformColorInput").forEach(input => {
+          input.addEventListener("input", () => {
+            draft.platforms[input.dataset.slot].color = input.value;
+          });
+        });
+        $platformFields.querySelectorAll(".platformNameInput").forEach(input => {
+          input.addEventListener("input", () => {
+            draft.platforms[input.dataset.slot].name = input.value.slice(0, 20);
+          });
+        });
+      };
+
+      const syncPanelUI = () => {
+        Array.from($themeGroup.children).forEach(btn =>
+          btn.classList.toggle("active", btn.dataset.theme === draft.theme));
+        $accentInput.value = draft.accent;
+        Array.from($swatchGroup.children).forEach(sw =>
+          sw.classList.toggle("active", sw.dataset.color.toLowerCase() === draft.accent.toLowerCase()));
+        Array.from($weeksGroup.children).forEach(btn =>
+          btn.classList.toggle("active", Number(btn.dataset.weeks) === draft.weeks));
+        Array.from($weekStartGroup.children).forEach(btn =>
+          btn.classList.toggle("active", btn.dataset.weekstart === draft.weekStart));
+        renderPlatformFields();
+      };
+
+      const openSettingsPanel = () => {
+        draft = JSON.parse(JSON.stringify(settings));
+        syncPanelUI();
+        $settingsPanel.classList.add("open");
+        $gearBtn.classList.add("open");
+      };
+      const closeSettingsPanel = () => {
+        $settingsPanel.classList.remove("open");
+        $gearBtn.classList.remove("open");
+      };
+
+      $gearBtn.addEventListener("click", () => {
+        if ($settingsPanel.classList.contains("open")) closeSettingsPanel();
+        else openSettingsPanel();
+      });
+      $closeSettings.addEventListener("click", closeSettingsPanel);
+
+      $themeGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-theme]");
+        if (!btn) return;
+        draft.theme = btn.dataset.theme;
+        syncPanelUI();
+        applyTheme(draft.theme);
+      });
+
+      $accentInput.addEventListener("input", () => {
+        draft.accent = $accentInput.value;
+        syncPanelUI();
+        setAccent(draft.accent);
+      });
+      $swatchGroup.addEventListener("click", (e) => {
+        const sw = e.target.closest("button[data-color]");
+        if (!sw) return;
+        draft.accent = sw.dataset.color;
+        syncPanelUI();
+        setAccent(draft.accent);
+      });
+
+      $weeksGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-weeks]");
+        if (!btn) return;
+        draft.weeks = Number(btn.dataset.weeks);
+        syncPanelUI();
+      });
+
+      $weekStartGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-weekstart]");
+        if (!btn) return;
+        draft.weekStart = btn.dataset.weekstart;
+        syncPanelUI();
+      });
+
+      $resetDefaults.addEventListener("click", () => {
+        draft = JSON.parse(JSON.stringify(DEFAULTS));
+        syncPanelUI();
+        applyTheme(draft.theme);
+        setAccent(draft.accent);
+      });
+
+      $saveSettings.addEventListener("click", () => {
+        PLATFORM_SLOTS.forEach(slot => {
+          if (!draft.platforms[slot].name || !draft.platforms[slot].name.trim()) {
+            draft.platforms[slot].name = DEFAULTS.platforms[slot].name;
+          }
+          if (!HEX_RE.test(draft.platforms[slot].color)) {
+            draft.platforms[slot].color = DEFAULTS.platforms[slot].color;
+          }
+        });
+        settings = JSON.parse(JSON.stringify(draft));
+        persistSettings();
+        closeSettingsPanel();
+        render();
+      });
+
+      $resetDataBtn.addEventListener("click", () => {
+        postData = { days: {}, notes: {} };
+        persistPostData();
+        render();
+        closeSettingsPanel();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!$settingsPanel.classList.contains("open")) return;
+        if (e.target === $gearBtn || $gearBtn.contains(e.target)) return;
+        if ($settingsPanel.contains(e.target)) return;
+        closeSettingsPanel();
+      });
+
+      applyTheme(settings.theme);
+      setAccent(settings.accent);
+      render();
+    })();
+  </script>
+</body>
+</html>
