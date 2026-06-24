@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Word of the Day — Swiftry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg, #ffffff);
+      color: var(--fg, #1a1a1a);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      background: var(--card-bg, #ffffff);
+      border-radius: 26px;
+      padding: 30px 24px 26px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 10px 30px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--card-border, rgba(0,0,0,0.04));
+    }
+
+    .streakBadge {
+      position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 3px;
+      font-size: 11px; font-weight: 700; color: var(--tab-fg, #6b6259); z-index: 4;
+    }
+    .streakBadge svg { width: 13px; height: 13px; color: var(--lang-color, #4a72d6); }
+    .streakBadge.lit { color: var(--lang-color, #4a72d6); }
+
+    .gearBtn {
+      position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 8px;
+      background: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; color: var(--tab-fg, #c2c2c2); opacity: 0.8;
+      transition: opacity .15s ease, background .15s ease, transform .2s ease; z-index: 4;
+    }
+    .gearBtn:hover { opacity: 1; background: rgba(0,0,0,0.04); }
+    .gearBtn:active { transform: scale(0.92); }
+    .gearBtn svg { width: 15px; height: 15px; }
+    .gearBtn.open { transform: rotate(40deg); opacity: 1; }
+
+    /* ---------- Word ---------- */
+    .wordMain {
+      font-family: "Baloo 2", "Trebuchet MS", "Comic Sans MS", -apple-system, sans-serif;
+      font-size: 34px; font-weight: 800; line-height: 1.15; color: var(--fg, #181512);
+      text-align: center; word-break: break-word; max-width: 100%; margin-top: 8px;
+      letter-spacing: -0.01em;
+    }
+    .wordMain.rtl { direction: rtl; }
+    .wordPron {
+      font-size: 12.5px; color: var(--tab-fg, #a8a8a8); font-weight: 500; letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+
+    /* ---------- Illustration ---------- */
+    .wordEmojiWrap {
+      width: 130px; height: 130px; border-radius: 50%;
+      background: var(--lang-soft, #f3f3f3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 14px 0 10px;
+    }
+    .wordEmoji { font-size: 62px; line-height: 1; }
+
+    /* ---------- Translation ---------- */
+    .translationMain {
+      font-family: "Baloo 2", "Trebuchet MS", "Comic Sans MS", -apple-system, sans-serif;
+      font-size: 27px; font-weight: 800; color: var(--fg, #181512); text-align: center; line-height: 1.2;
+    }
+    .exampleText {
+      font-size: 12.5px; color: var(--mode-fg, #3d372f); text-align: center; line-height: 1.5;
+      max-width: 95%; margin-top: 6px; font-weight: 500;
+    }
+
+    /* ---------- Lock state (already viewed today) ---------- */
+    .lockNote {
+      display: none; align-items: center; gap: 5px; margin-top: 14px;
+      font-size: 10.5px; color: var(--tab-fg, #b8b8b8); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .lockNote.show { display: flex; }
+    .lockNote svg { width: 12px; height: 12px; }
+
+    .revealHint {
+      margin-top: 14px; font-size: 11px; color: var(--lang-color, #5b8cff); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer;
+    }
+    .revealHint:hover { opacity: 0.8; }
+
+    /* ---------- Mastered toggle (small, unobtrusive) ---------- */
+    .masterRow { margin-top: 16px; display: flex; align-items: center; gap: 6px; }
+    .masterToggle {
+      width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--btn-border, #d8d8d8);
+      background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .masterToggle svg { width: 9px; height: 9px; opacity: 0; transition: opacity .1s ease; color: #fff; }
+    .masterToggle.active { background: var(--lang-color, #5b8cff); border-color: var(--lang-color, #5b8cff); }
+    .masterToggle.active svg { opacity: 1; }
+    .masterLabel { font-size: 10.5px; color: var(--tab-fg, #b8b8b8); font-weight: 600; cursor: pointer; user-select: none; }
+
+    .footer { margin-top: 14px; font-size: 9px; color: var(--footer-fg, #d4d4d4); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
+
+    /* ---------- Settings panel ---------- */
+    .settingsPanel {
+      position: absolute; inset: 0; background: var(--card-bg, #ffffff); border-radius: 26px; padding: 20px;
+      display: flex; flex-direction: column; gap: 14px; opacity: 0; visibility: hidden; transform: translateY(4px);
+      transition: opacity .16s ease, transform .16s ease, visibility .16s; z-index: 5; overflow-y: auto;
+    }
+    .settingsPanel.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .settingsHead { display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; background: var(--card-bg, #fffdf9); padding-right: 4px; }
+    .settingsEyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lang-color, #4a72d6); margin-bottom: 2px; }
+    .settingsHead h2 {
+      font-family: "Baloo 2", "Trebuchet MS", "Comic Sans MS", -apple-system, sans-serif;
+      font-size: 19px; font-weight: 800; margin: 0; color: var(--fg, #181512);
+    }
+    .closeBtn {
+      width: 24px; height: 24px; border: none; background: rgba(0,0,0,0.04); cursor: pointer; color: var(--tab-fg, #6b6259);
+      display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; margin-top: 2px;
+    }
+    .closeBtn:hover { background: rgba(0,0,0,0.08); }
+    .closeBtn svg { width: 15px; height: 15px; }
+
+    .settingsSection { display: flex; flex-direction: column; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--divider, #e8e2d4); text-align: left; }
+    .settingsSection:last-of-type { border-bottom: none; }
+    .settingsBlurb { font-size: 12px; color: var(--mode-fg, #3d372f); font-weight: 600; line-height: 1.4; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 700; color: var(--mode-fg, #3d372f); }
+
+    .langGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .langBtn {
+      border: 2px solid var(--btn-border, #ececec); background: #fafafa;
+      color: var(--mode-fg, #555); border-radius: 11px; padding: 8px 6px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: background .12s ease, border-color .12s ease, color .12s ease;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .langBtn.active { border-color: var(--btn-lang-color); color: var(--btn-lang-color); background: #fafafa; position: relative; }
+    .langBtn.active::before {
+      content: ""; position: absolute; inset: 0; border-radius: 9px; background: var(--btn-lang-color);
+      opacity: 0.1; z-index: -1;
+    }
+
+    .progressLine { font-size: 10.5px; color: var(--tab-fg, #b8b8b8); font-weight: 600; }
+    .progressLine b { color: var(--lang-color, #5b8cff); }
+
+    .ownWordForm { display: flex; flex-direction: column; gap: 6px; }
+    .ownWordForm input {
+      font: inherit; font-size: 12px; padding: 8px 10px; border-radius: 10px;
+      border: 1.5px solid var(--btn-border, #ececec); background: #fafafa;
+      color: var(--fg, #1a1a1a); outline: none;
+    }
+    .ownWordForm input:focus { border-color: var(--lang-color, #5b8cff); }
+    .addWordBtn {
+      border: none; border-radius: 10px; padding: 8px 0; font-size: 11.5px; font-weight: 800; cursor: pointer;
+      background: var(--lang-color, #5b8cff); color: #fff;
+    }
+    .ownWordsList { display: flex; flex-direction: column; gap: 4px; max-height: 100px; overflow-y: auto; }
+    .ownWordRow {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      font-size: 11px; color: var(--mode-fg, #555); background: #fafafa;
+      border-radius: 9px; padding: 6px 8px;
+    }
+    .ownWordRow button { border: none; background: transparent; color: var(--tab-fg, #b8b8b8); cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px; }
+    .ownWordRow button:hover { color: var(--danger, #e0594f); }
+
+    .dangerBtn {
+      background: transparent; color: var(--danger, #e0594f); border: 1.5px solid var(--btn-border, #ececec);
+      border-radius: 11px; padding: 9px 0; font-size: 11px; font-weight: 700; cursor: pointer; width: 100%;
+    }
+    .dangerBtn:hover { background: rgba(224,89,79,0.06); }
+
+    .settingsFoot { display: flex; gap: 8px; padding-top: 4px; position: sticky; bottom: 0; background: var(--card-bg, #ffffff); }
+    .settingsFoot button { flex: 1; border: none; border-radius: 12px; padding: 10px 0; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+    .saveBtn { background: var(--lang-color, #5b8cff); color: #fff; }
+
+    @media (max-width: 260px) { .card { max-width: 100%; padding: 24px 16px 20px; } .wordMain { font-size: 26px; } .wordEmojiWrap { width: 105px; height: 105px; } .wordEmoji { font-size: 50px; } }
+
+    body {
+      --bg: #f0ede6; --fg: #181512; --card-bg: #fffdf9; --card-border: rgba(0,0,0,0.06);
+      --tab-fg: #6b6259; --mode-fg: #3d372f; --btn-border: #e2dccf;
+      --footer-fg: #a89d8c; --danger: #d6453a; --divider: #e8e2d4;
+      --lang-color: #4a72d6; --lang-soft: #e8edfb;
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="region" aria-label="Word of the day">
+    <div class="streakBadge" id="streakBadge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c3 4-1 5 2 9 2 3 1 6-2 7-3-1-4-4-2-7 1.5-2 .5-4-2-5 1 3-2 4-2 6 0 3 2 5 4 5"/></svg>
+      <span id="streakVal">0</span>
+    </div>
+    <button class="gearBtn" id="gearBtn" aria-label="Open settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+
+    <span class="wordMain" id="wordMain">Word</span>
+    <span class="wordPron" id="wordPron">pronunciation</span>
+
+    <div class="wordEmojiWrap"><span class="wordEmoji" id="wordEmoji">✨</span></div>
+
+    <span class="translationMain" id="translationMain">Translation</span>
+    <span class="exampleText" id="exampleText">Example sentence.</span>
+
+    <div class="masterRow">
+      <button type="button" class="masterToggle" id="masterToggle" aria-label="Mark as mastered">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      </button>
+      <span class="masterLabel" id="masterLabel">Mark as mastered</span>
+    </div>
+
+    <div class="lockNote" id="lockNote">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span id="lockNoteText">New word tomorrow</span>
+    </div>
+
+    <div class="footer">Swiftry</div>
+
+    <div class="settingsPanel" id="settingsPanel" role="dialog" aria-label="Widget settings">
+      <div class="settingsHead">
+        <div>
+          <div class="settingsEyebrow">Your word deck</div>
+          <h2>Pick your path</h2>
+        </div>
+        <button class="closeBtn" id="closeSettingsBtn" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsBlurb">Which language are you learning right now?</div>
+        <div class="field">
+          <div class="langGrid" id="langGrid"></div>
+          <div class="progressLine" id="progressLine"></div>
+        </div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsBlurb">Got a word of your own to learn? Add it here.</div>
+        <div class="field">
+          <div class="ownWordForm">
+            <input type="text" id="ownWordInput" placeholder="The word" maxlength="40" />
+            <input type="text" id="ownPronInput" placeholder="How it sounds (optional)" maxlength="60" />
+            <input type="text" id="ownTransInput" placeholder="What it means" maxlength="80" />
+            <input type="text" id="ownExampleInput" placeholder="Use it in a sentence (optional)" maxlength="120" />
+            <button type="button" class="addWordBtn" id="addWordBtn">Add to my deck</button>
+          </div>
+          <div class="ownWordsList" id="ownWordsList"></div>
+        </div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsBlurb">Starting over? This clears your mastered words and progress for every language.</div>
+        <button type="button" class="dangerBtn" id="resetDataBtn">Reset my progress</button>
+      </div>
+
+      <div class="settingsFoot">
+        <button class="saveBtn" id="saveSettingsBtn" type="button" style="flex:1;">Back to today's word</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* =====================================================================
+       Word of the Day — Swiftry (minimal edition)
+       One word a day, in a language of your choice. The word is locked
+       once revealed — come back tomorrow for the next one. No skipping,
+       no flipping; everything is shown at once in a clean, single-word
+       card. Mark words as mastered to remove them from the rotation, and
+       add your own custom words alongside the built-in lists.
+
+       Data lives entirely in localStorage — no account, no external
+       request. Language can optionally be preset via ?lang=japanese in
+       the embed URL; everything else is configured via the gear icon.
+       ===================================================================== */
+    (function () {
+      const SETTINGS_KEY = "swiftry-wotd-settings";
+      const PROGRESS_KEY = "swiftry-wotd-progress";
+      const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+      // ---------- built-in word lists ----------
+      const WORD_LISTS = {
+        english:    { label: "English",    rtl: false, color: "#5b8cff", flag: "🇬🇧", words: [
+          {word:"Serendipity",pronunciation:"ser-uhn-DIP-i-tee",translation:"A pleasant surprise found by chance",example:"Meeting her was pure serendipity.",emoji:"✨"},
+          {word:"Mellow",pronunciation:"MEL-oh",translation:"Soft, relaxed, gentle",example:"The music had a mellow tone.",emoji:"🌙"},
+          {word:"Wanderlust",pronunciation:"WAN-der-lust",translation:"A strong desire to travel",example:"Her wanderlust took her across three continents.",emoji:"🧭"},
+          {word:"Resilient",pronunciation:"ri-ZIL-yent",translation:"Able to recover quickly from difficulty",example:"He stayed resilient after the setback.",emoji:"🌱"},
+          {word:"Eloquent",pronunciation:"EL-uh-kwent",translation:"Fluent and persuasive in speech",example:"Her eloquent speech moved the crowd.",emoji:"🎤"},
+          {word:"Nostalgia",pronunciation:"no-STAL-juh",translation:"A sentimental longing for the past",example:"The song filled him with nostalgia.",emoji:"📻"},
+          {word:"Candid",pronunciation:"KAN-did",translation:"Honest and direct",example:"She gave a candid answer.",emoji:"💬"},
+          {word:"Vivid",pronunciation:"VIV-id",translation:"Bright, intense, lifelike",example:"He had a vivid memory of the trip.",emoji:"🎨"},
+          {word:"Tranquil",pronunciation:"TRANG-kwil",translation:"Calm and peaceful",example:"The lake was tranquil at dawn.",emoji:"🌊"},
+          {word:"Ambitious",pronunciation:"am-BISH-us",translation:"Having a strong desire to succeed",example:"She set ambitious goals for the year.",emoji:"🚀"},
+          {word:"Whimsical",pronunciation:"WIM-zi-kuhl",translation:"Playfully quaint or fanciful",example:"The decor was whimsical and fun.",emoji:"🎪"},
+          {word:"Genuine",pronunciation:"JEN-yoo-in",translation:"Real, authentic, sincere",example:"His apology felt genuine.",emoji:"💎"},
+          {word:"Diligent",pronunciation:"DIL-i-juhnt",translation:"Showing care and effort in work",example:"She was diligent with her studies.",emoji:"📚"},
+          {word:"Curious",pronunciation:"KYOOR-ee-us",translation:"Eager to learn or know",example:"The child was curious about everything.",emoji:"🔍"},
+          {word:"Gratitude",pronunciation:"GRAT-i-tood",translation:"A feeling of thankfulness",example:"He expressed deep gratitude.",emoji:"🙏"},
+          {word:"Bliss",pronunciation:"BLIS",translation:"Perfect happiness",example:"Pure bliss washed over her.",emoji:"☁️"},
+          {word:"Insight",pronunciation:"IN-sahyt",translation:"A deep understanding",example:"Her insight helped solve the problem.",emoji:"💡"},
+          {word:"Persevere",pronunciation:"pur-suh-VEER",translation:"To keep going despite difficulty",example:"They persevered through the storm.",emoji:"⛰️"}
+        ]},
+        japanese: { label: "Japanese", rtl: false, color: "#e8689a", flag: "🇯🇵", words: [
+          {word:"ありがとう",pronunciation:"arigatou",translation:"Thank you",example:"ありがとう、助かりました。",emoji:"🙏"},
+          {word:"猫",pronunciation:"neko",translation:"Cat",example:"猫が好きです。",emoji:"🐱"},
+          {word:"桜",pronunciation:"sakura",translation:"Cherry blossom",example:"桜がきれいです。",emoji:"🌸"},
+          {word:"友達",pronunciation:"tomodachi",translation:"Friend",example:"彼は私の友達です。",emoji:"🤝"},
+          {word:"頑張って",pronunciation:"ganbatte",translation:"Good luck / Do your best",example:"試験頑張ってね。",emoji:"💪"},
+          {word:"美味しい",pronunciation:"oishii",translation:"Delicious",example:"このラーメンは美味しいです。",emoji:"🍜"},
+          {word:"勉強",pronunciation:"benkyou",translation:"Study",example:"毎日日本語を勉強します。",emoji:"📖"},
+          {word:"家族",pronunciation:"kazoku",translation:"Family",example:"家族と旅行に行きます。",emoji:"👨‍👩‍👧"},
+          {word:"明日",pronunciation:"ashita",translation:"Tomorrow",example:"明日会いましょう。",emoji:"📅"},
+          {word:"静か",pronunciation:"shizuka",translation:"Quiet",example:"図書館は静かです。",emoji:"🤫"},
+          {word:"夢",pronunciation:"yume",translation:"Dream",example:"私の夢は医者になることです。",emoji:"💭"},
+          {word:"幸せ",pronunciation:"shiawase",translation:"Happiness",example:"今、とても幸せです。",emoji:"😊"},
+          {word:"水",pronunciation:"mizu",translation:"Water",example:"水を飲みます。",emoji:"💧"},
+          {word:"旅行",pronunciation:"ryokou",translation:"Travel",example:"来月旅行に行きます。",emoji:"✈️"},
+          {word:"音楽",pronunciation:"ongaku",translation:"Music",example:"音楽を聴くのが好きです。",emoji:"🎵"},
+          {word:"綺麗",pronunciation:"kirei",translation:"Beautiful / Clean",example:"この景色は綺麗です。",emoji:"🌅"},
+          {word:"頭",pronunciation:"atama",translation:"Head",example:"頭が痛いです。",emoji:"🧠"},
+          {word:"時間",pronunciation:"jikan",translation:"Time",example:"時間がありません。",emoji:"⏰"}
+        ]},
+        chinese: { label: "Chinese", rtl: false, color: "#d6473c", flag: "🇨🇳", words: [
+          {word:"你好",pronunciation:"nǐ hǎo",translation:"Hello",example:"你好，最近怎么样？",emoji:"👋"},
+          {word:"谢谢",pronunciation:"xiè xiè",translation:"Thank you",example:"谢谢你的帮助。",emoji:"🙏"},
+          {word:"朋友",pronunciation:"péng yǒu",translation:"Friend",example:"他是我的好朋友。",emoji:"🤝"},
+          {word:"猫",pronunciation:"māo",translation:"Cat",example:"我家有一只猫。",emoji:"🐱"},
+          {word:"学习",pronunciation:"xué xí",translation:"To study",example:"我每天学习中文。",emoji:"📖"},
+          {word:"家庭",pronunciation:"jiā tíng",translation:"Family",example:"我爱我的家庭。",emoji:"👨‍👩‍👧"},
+          {word:"美丽",pronunciation:"měi lì",translation:"Beautiful",example:"这个公园很美丽。",emoji:"🌅"},
+          {word:"快乐",pronunciation:"kuài lè",translation:"Happy",example:"祝你生日快乐。",emoji:"😊"},
+          {word:"水",pronunciation:"shuǐ",translation:"Water",example:"请给我一杯水。",emoji:"💧"},
+          {word:"旅行",pronunciation:"lǚ xíng",translation:"Travel",example:"我喜欢旅行。",emoji:"✈️"},
+          {word:"音乐",pronunciation:"yīn yuè",translation:"Music",example:"我喜欢听音乐。",emoji:"🎵"},
+          {word:"时间",pronunciation:"shí jiān",translation:"Time",example:"我没有时间。",emoji:"⏰"},
+          {word:"梦想",pronunciation:"mèng xiǎng",translation:"Dream",example:"我的梦想是成为医生。",emoji:"💭"},
+          {word:"安静",pronunciation:"ān jìng",translation:"Quiet",example:"图书馆很安静。",emoji:"🤫"},
+          {word:"好吃",pronunciation:"hǎo chī",translation:"Delicious",example:"这个菜很好吃。",emoji:"🍜"},
+          {word:"明天",pronunciation:"míng tiān",translation:"Tomorrow",example:"明天见。",emoji:"📅"},
+          {word:"加油",pronunciation:"jiā yóu",translation:"Good luck / Keep going",example:"考试加油！",emoji:"💪"},
+          {word:"樱花",pronunciation:"yīng huā",translation:"Cherry blossom",example:"春天樱花很漂亮。",emoji:"🌸"}
+        ]},
+        spanish: { label: "Spanish", rtl: false, color: "#e8923d", flag: "🇪🇸", words: [
+          {word:"Amistad",pronunciation:"ah-mees-TAHD",translation:"Friendship",example:"Valoro mucho nuestra amistad.",emoji:"🤝"},
+          {word:"Cariño",pronunciation:"kah-REE-nyo",translation:"Affection / sweetheart",example:"Te quiero, mi cariño.",emoji:"💛"},
+          {word:"Tranquilo",pronunciation:"trahn-KEE-lo",translation:"Calm",example:"Todo está tranquilo aquí.",emoji:"🌊"},
+          {word:"Sueño",pronunciation:"SWEH-nyo",translation:"Dream / sleep",example:"Tengo un sueño muy claro.",emoji:"💭"},
+          {word:"Felicidad",pronunciation:"feh-lee-see-DAHD",translation:"Happiness",example:"La felicidad está en los detalles.",emoji:"😊"},
+          {word:"Viaje",pronunciation:"VYAH-heh",translation:"Trip / journey",example:"Hicimos un viaje increíble.",emoji:"✈️"},
+          {word:"Hermoso",pronunciation:"ehr-MO-so",translation:"Beautiful",example:"El paisaje es hermoso.",emoji:"🌅"},
+          {word:"Esperanza",pronunciation:"es-peh-RAHN-sah",translation:"Hope",example:"Nunca pierdas la esperanza.",emoji:"🌱"},
+          {word:"Familia",pronunciation:"fah-MEE-lyah",translation:"Family",example:"Mi familia es lo más importante.",emoji:"👨‍👩‍👧"},
+          {word:"Gracias",pronunciation:"GRAH-syahs",translation:"Thank you",example:"Gracias por tu ayuda.",emoji:"🙏"},
+          {word:"Aprender",pronunciation:"ah-prehn-DEHR",translation:"To learn",example:"Me encanta aprender idiomas.",emoji:"📖"},
+          {word:"Tiempo",pronunciation:"TYEM-po",translation:"Time / weather",example:"No tengo mucho tiempo.",emoji:"⏰"},
+          {word:"Delicioso",pronunciation:"deh-lee-SYO-so",translation:"Delicious",example:"Este plato está delicioso.",emoji:"🍜"},
+          {word:"Música",pronunciation:"MOO-see-kah",translation:"Music",example:"Me gusta escuchar música.",emoji:"🎵"},
+          {word:"Gato",pronunciation:"GAH-to",translation:"Cat",example:"Mi gato duerme todo el día.",emoji:"🐱"},
+          {word:"Silencio",pronunciation:"see-LEN-syo",translation:"Silence",example:"Había un silencio total.",emoji:"🤫"},
+          {word:"Mañana",pronunciation:"mah-NYAH-nah",translation:"Tomorrow / morning",example:"Nos vemos mañana.",emoji:"📅"},
+          {word:"Fuerza",pronunciation:"FWEHR-sah",translation:"Strength",example:"¡Tú puedes, fuerza!",emoji:"💪"}
+        ]},
+        portuguese: { label: "Portuguese", rtl: false, color: "#3da66a", flag: "🇵🇹", words: [
+          {word:"Saudade",pronunciation:"sah-oo-DAH-jee",translation:"A deep longing for something missed",example:"Sinto muita saudade de casa.",emoji:"💭"},
+          {word:"Amizade",pronunciation:"ah-mee-ZAH-jee",translation:"Friendship",example:"Nossa amizade é especial.",emoji:"🤝"},
+          {word:"Alegria",pronunciation:"ah-leh-GREE-ah",translation:"Joy",example:"Que alegria te ver aqui!",emoji:"😊"},
+          {word:"Viagem",pronunciation:"vee-AH-zheng",translation:"Trip / journey",example:"Vamos fazer uma viagem.",emoji:"✈️"},
+          {word:"Família",pronunciation:"fah-MEE-lee-ah",translation:"Family",example:"Minha família é tudo para mim.",emoji:"👨‍👩‍👧"},
+          {word:"Esperança",pronunciation:"es-peh-RAHN-sah",translation:"Hope",example:"Nunca perca a esperança.",emoji:"🌱"},
+          {word:"Bonito",pronunciation:"bo-NEE-too",translation:"Beautiful",example:"Que dia bonito hoje.",emoji:"🌅"},
+          {word:"Obrigado",pronunciation:"oh-bree-GAH-doo",translation:"Thank you",example:"Obrigado pela ajuda.",emoji:"🙏"},
+          {word:"Aprender",pronunciation:"ah-preng-DEHR",translation:"To learn",example:"Adoro aprender línguas novas.",emoji:"📖"},
+          {word:"Tempo",pronunciation:"TENG-poo",translation:"Time / weather",example:"Não tenho muito tempo.",emoji:"⏰"},
+          {word:"Gostoso",pronunciation:"gos-TOH-zoo",translation:"Delicious / nice",example:"Esse bolo está gostoso.",emoji:"🍜"},
+          {word:"Música",pronunciation:"MOO-zee-kah",translation:"Music",example:"Gosto de ouvir música.",emoji:"🎵"},
+          {word:"Gato",pronunciation:"GAH-too",translation:"Cat",example:"O gato dorme o dia todo.",emoji:"🐱"},
+          {word:"Silêncio",pronunciation:"see-LENG-see-oo",translation:"Silence",example:"Fez um silêncio total.",emoji:"🤫"},
+          {word:"Amanhã",pronunciation:"ah-mah-NYAH",translation:"Tomorrow",example:"Nos vemos amanhã.",emoji:"📅"},
+          {word:"Força",pronunciation:"FOR-sah",translation:"Strength",example:"Força, você consegue!",emoji:"💪"},
+          {word:"Sonho",pronunciation:"SOH-nyoo",translation:"Dream",example:"Esse é meu maior sonho.",emoji:"💭"},
+          {word:"Calmo",pronunciation:"KAHL-moo",translation:"Calm",example:"O mar está calmo hoje.",emoji:"🌊"}
+        ]},
+        german: { label: "German", rtl: false, color: "#d6a52a", flag: "🇩🇪", words: [
+          {word:"Fernweh",pronunciation:"FEHRN-vey",translation:"A longing for far-off places",example:"Ich habe richtig Fernweh.",emoji:"🧭"},
+          {word:"Freundschaft",pronunciation:"FROYND-shahft",translation:"Friendship",example:"Unsere Freundschaft ist wichtig.",emoji:"🤝"},
+          {word:"Glück",pronunciation:"GLUEK",translation:"Happiness / luck",example:"Ich wünsche dir viel Glück.",emoji:"😊"},
+          {word:"Reise",pronunciation:"RY-zeh",translation:"Trip / journey",example:"Die Reise war wunderschön.",emoji:"✈️"},
+          {word:"Familie",pronunciation:"fah-MEE-lyeh",translation:"Family",example:"Meine Familie ist mir wichtig.",emoji:"👨‍👩‍👧"},
+          {word:"Hoffnung",pronunciation:"HOF-noong",translation:"Hope",example:"Gib die Hoffnung nicht auf.",emoji:"🌱"},
+          {word:"Schön",pronunciation:"SHOEN",translation:"Beautiful",example:"Der Sonnenuntergang ist schön.",emoji:"🌅"},
+          {word:"Danke",pronunciation:"DAHN-keh",translation:"Thank you",example:"Danke für deine Hilfe.",emoji:"🙏"},
+          {word:"Lernen",pronunciation:"LEHR-nen",translation:"To learn",example:"Ich lerne gerne neue Sprachen.",emoji:"📖"},
+          {word:"Zeit",pronunciation:"TSYT",translation:"Time",example:"Ich habe nicht viel Zeit.",emoji:"⏰"},
+          {word:"Lecker",pronunciation:"LEH-ker",translation:"Delicious",example:"Das Essen ist sehr lecker.",emoji:"🍜"},
+          {word:"Musik",pronunciation:"moo-ZEEK",translation:"Music",example:"Ich höre gerne Musik.",emoji:"🎵"},
+          {word:"Katze",pronunciation:"KAHT-seh",translation:"Cat",example:"Die Katze schläft den ganzen Tag.",emoji:"🐱"},
+          {word:"Stille",pronunciation:"SHTIL-leh",translation:"Silence",example:"Es herrschte völlige Stille.",emoji:"🤫"},
+          {word:"Morgen",pronunciation:"MOR-gen",translation:"Tomorrow / morning",example:"Bis morgen!",emoji:"📅"},
+          {word:"Kraft",pronunciation:"KRAHFT",translation:"Strength",example:"Du schaffst das, viel Kraft!",emoji:"💪"},
+          {word:"Traum",pronunciation:"TROWM",translation:"Dream",example:"Das ist mein größter Traum.",emoji:"💭"},
+          {word:"Ruhig",pronunciation:"ROO-ig",translation:"Calm",example:"Das Meer ist heute ruhig.",emoji:"🌊"}
+        ]},
+        korean: { label: "Korean", rtl: false, color: "#9d5ce0", flag: "🇰🇷", words: [
+          {word:"안녕하세요",pronunciation:"annyeonghaseyo",translation:"Hello",example:"안녕하세요, 만나서 반가워요.",emoji:"👋"},
+          {word:"감사합니다",pronunciation:"gamsahamnida",translation:"Thank you",example:"도와주셔서 감사합니다.",emoji:"🙏"},
+          {word:"친구",pronunciation:"chingu",translation:"Friend",example:"그는 제 친구예요.",emoji:"🤝"},
+          {word:"고양이",pronunciation:"goyangi",translation:"Cat",example:"고양이가 자고 있어요.",emoji:"🐱"},
+          {word:"공부",pronunciation:"gongbu",translation:"Study",example:"매일 한국어 공부를 해요.",emoji:"📖"},
+          {word:"가족",pronunciation:"gajok",translation:"Family",example:"가족과 시간을 보내요.",emoji:"👨‍👩‍👧"},
+          {word:"행복",pronunciation:"haengbok",translation:"Happiness",example:"지금 정말 행복해요.",emoji:"😊"},
+          {word:"여행",pronunciation:"yeohaeng",translation:"Travel",example:"다음 달에 여행을 가요.",emoji:"✈️"},
+          {word:"아름다운",pronunciation:"areumdaun",translation:"Beautiful",example:"정말 아름다운 풍경이에요.",emoji:"🌅"},
+          {word:"꿈",pronunciation:"kkum",translation:"Dream",example:"제 꿈은 의사가 되는 거예요.",emoji:"💭"},
+          {word:"조용한",pronunciation:"joyonghan",translation:"Quiet",example:"도서관은 조용해요.",emoji:"🤫"},
+          {word:"맛있는",pronunciation:"masinneun",translation:"Delicious",example:"이 음식 정말 맛있어요.",emoji:"🍜"},
+          {word:"시간",pronunciation:"sigan",translation:"Time",example:"시간이 없어요.",emoji:"⏰"},
+          {word:"음악",pronunciation:"eumak",translation:"Music",example:"음악 듣는 걸 좋아해요.",emoji:"🎵"},
+          {word:"내일",pronunciation:"naeil",translation:"Tomorrow",example:"내일 봐요.",emoji:"📅"},
+          {word:"힘",pronunciation:"him",translation:"Strength",example:"힘내세요!",emoji:"💪"},
+          {word:"물",pronunciation:"mul",translation:"Water",example:"물 좀 주세요.",emoji:"💧"},
+          {word:"희망",pronunciation:"huimang",translation:"Hope",example:"희망을 잃지 마세요.",emoji:"🌱"}
+        ]},
+        arabic: { label: "Arabic", rtl: true, color: "#2bb3a3", flag: "🇸🇦", words: [
+          {word:"شكراً",pronunciation:"shukran",translation:"Thank you",example:"شكراً جزيلاً على مساعدتك.",emoji:"🙏"},
+          {word:"صديق",pronunciation:"sadeeq",translation:"Friend",example:"هو صديقي المفضل.",emoji:"🤝"},
+          {word:"قطة",pronunciation:"qitta",translation:"Cat",example:"القطة نائمة الآن.",emoji:"🐱"},
+          {word:"عائلة",pronunciation:"aa'ila",translation:"Family",example:"عائلتي مهمة جداً لي.",emoji:"👨‍👩‍👧"},
+          {word:"سعادة",pronunciation:"sa'ada",translation:"Happiness",example:"أشعر بسعادة كبيرة اليوم.",emoji:"😊"},
+          {word:"سفر",pronunciation:"safar",translation:"Travel",example:"أحب السفر كثيراً.",emoji:"✈️"},
+          {word:"جميل",pronunciation:"jameel",translation:"Beautiful",example:"المنظر جميل جداً.",emoji:"🌅"},
+          {word:"أمل",pronunciation:"amal",translation:"Hope",example:"لا تفقد الأمل أبداً.",emoji:"🌱"},
+          {word:"تعلم",pronunciation:"ta'allam",translation:"To learn",example:"أحب تعلم لغات جديدة.",emoji:"📖"},
+          {word:"وقت",pronunciation:"waqt",translation:"Time",example:"ليس لدي وقت كثير.",emoji:"⏰"},
+          {word:"لذيذ",pronunciation:"ladheedh",translation:"Delicious",example:"هذا الطعام لذيذ جداً.",emoji:"🍜"},
+          {word:"موسيقى",pronunciation:"musiqa",translation:"Music",example:"أحب الاستماع إلى الموسيقى.",emoji:"🎵"},
+          {word:"صمت",pronunciation:"samt",translation:"Silence",example:"كان هناك صمت كامل.",emoji:"🤫"},
+          {word:"غداً",pronunciation:"ghadan",translation:"Tomorrow",example:"أراك غداً.",emoji:"📅"},
+          {word:"قوة",pronunciation:"quwwa",translation:"Strength",example:"أنت قوي، استمر!",emoji:"💪"},
+          {word:"حلم",pronunciation:"hulm",translation:"Dream",example:"هذا حلمي الكبير.",emoji:"💭"},
+          {word:"ماء",pronunciation:"maa'",translation:"Water",example:"أعطني كوب ماء من فضلك.",emoji:"💧"},
+          {word:"هادئ",pronunciation:"haadi'",translation:"Calm",example:"البحر هادئ اليوم.",emoji:"🌊"}
+        ]}
+      };
+      const LANG_KEYS = Object.keys(WORD_LISTS);
+
+      const DEFAULTS = { language: "english" };
+
+      // ---------- settings ----------
+      const params = new URLSearchParams(window.location.search);
+      const urlLang = (params.get("lang") || "").toLowerCase();
+
+      let settings = { ...DEFAULTS };
+      if (LANG_KEYS.includes(urlLang)) settings.language = urlLang;
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+        if (saved && typeof saved === "object") {
+          settings.language = LANG_KEYS.includes(saved.language) ? saved.language : settings.language;
+        }
+      } catch (_) { /* ignore */ }
+
+      const persistSettings = () => {
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+        catch (_) { /* ignore */ }
+      };
+
+      // ---------- progress ----------
+      // progress = {
+      //   mastered: { english: ["Word", ...], ... },
+      //   customWords: { english: [{word,pronunciation,translation,example,emoji}, ...], ... },
+      //   dailyPick: { date: "YYYY-MM-DD", language: "english", word: "Word" },
+      //   masteredToday: { date: "YYYY-MM-DD", count: 0 },  — resets automatically once the date changes
+      //   streak: { count: 0, lastDay: "YYYY-MM-DD" }  — global across all languages; just opening the
+      //     widget on a given day counts as that day's activity
+      // }
+      const DAILY_MASTER_LIMIT = 3;
+      let progress = { mastered: {}, customWords: {}, dailyPick: null, masteredToday: { date: null, count: 0 }, streak: { count: 0, lastDay: null } };
+      try {
+        const raw = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "null");
+        if (raw && typeof raw === "object") {
+          progress = {
+            mastered: raw.mastered && typeof raw.mastered === "object" ? raw.mastered : {},
+            customWords: raw.customWords && typeof raw.customWords === "object" ? raw.customWords : {},
+            dailyPick: raw.dailyPick || null,
+            masteredToday: (raw.masteredToday && typeof raw.masteredToday.count === "number") ? raw.masteredToday : { date: null, count: 0 },
+            streak: (raw.streak && typeof raw.streak.count === "number") ? raw.streak : { count: 0, lastDay: null }
+          };
+        }
+      } catch (_) { /* ignore */ }
+
+      const persistProgress = () => {
+        try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); }
+        catch (_) { /* ignore */ }
+      };
+
+      // Returns how many words have been mastered today, after silently
+      // rolling the counter over to 0 if the stored date isn't today.
+      const getMasteredTodayCount = () => {
+        const today = todayKey();
+        if (progress.masteredToday.date !== today) {
+          progress.masteredToday = { date: today, count: 0 };
+        }
+        return progress.masteredToday.count;
+      };
+
+      const todayKey = () => {
+        const d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      };
+      const yesterdayKey = () => {
+        const d = new Date(); d.setDate(d.getDate() - 1);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      };
+
+      // Registers today as an active day (just opening the widget counts)
+      // and updates the consecutive-day streak: +1 if yesterday was also
+      // active, reset to 1 if a day was skipped, no-op if already counted
+      // today (prevents double-counting on multiple opens same day).
+      const registerDailyActivity = () => {
+        const today = todayKey();
+        if (progress.streak.lastDay === today) return;
+        const yest = yesterdayKey();
+        progress.streak.count = (progress.streak.lastDay === yest) ? progress.streak.count + 1 : 1;
+        progress.streak.lastDay = today;
+        persistProgress();
+      };
+
+      // ---------- DOM refs ----------
+      const $wordMain        = document.getElementById("wordMain");
+      const $streakBadge     = document.getElementById("streakBadge");
+      const $streakVal       = document.getElementById("streakVal");
+      const $wordPron        = document.getElementById("wordPron");
+      const $wordEmoji       = document.getElementById("wordEmoji");
+      const $translationMain = document.getElementById("translationMain");
+      const $exampleText     = document.getElementById("exampleText");
+      const $masterToggle    = document.getElementById("masterToggle");
+      const $masterLabel     = document.getElementById("masterLabel");
+      const $lockNote        = document.getElementById("lockNote");
+      const $lockNoteText    = document.getElementById("lockNoteText");
+
+      const $gearBtn        = document.getElementById("gearBtn");
+      const $settingsPanel  = document.getElementById("settingsPanel");
+      const $closeSettings  = document.getElementById("closeSettingsBtn");
+      const $langGrid       = document.getElementById("langGrid");
+      const $progressLine   = document.getElementById("progressLine");
+      const $ownWordInput   = document.getElementById("ownWordInput");
+      const $ownPronInput   = document.getElementById("ownPronInput");
+      const $ownTransInput  = document.getElementById("ownTransInput");
+      const $ownExampleInput= document.getElementById("ownExampleInput");
+      const $addWordBtn     = document.getElementById("addWordBtn");
+      const $ownWordsList   = document.getElementById("ownWordsList");
+      const $saveSettings   = document.getElementById("saveSettingsBtn");
+      const $resetDataBtn   = document.getElementById("resetDataBtn");
+
+      let currentWord = null;
+
+      const setLangColor = (lang) => {
+        const color = WORD_LISTS[lang]?.color || "#5b8cff";
+        document.documentElement.style.setProperty("--lang-color", color);
+        document.documentElement.style.setProperty("--lang-soft", color + "1a"); // ~10% alpha hex suffix for the illustration backdrop
+      };
+
+      const escapeHtml = (str) => {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      };
+
+      const getFullPool = (lang) => {
+        const builtIn = WORD_LISTS[lang]?.words || [];
+        const custom = progress.customWords[lang] || [];
+        return [...builtIn, ...custom];
+      };
+      const getActivePool = (lang) => {
+        const masteredSet = new Set(progress.mastered[lang] || []);
+        return getFullPool(lang).filter(w => !masteredSet.has(w.word));
+      };
+
+      // ---------- deterministic daily pick: ONE word per day, fixed once
+      // chosen — there is no "next word" skip in this minimal edition.
+      // It only changes when the date rolls over, or if the previously
+      // picked word becomes unavailable (mastered/removed) in the
+      // meantime, in which case a new one is picked for the same day. ----------
+      const pickDailyWord = (lang) => {
+        const pool = getActivePool(lang);
+        if (pool.length === 0) return null;
+
+        const today = todayKey();
+        const pick = progress.dailyPick;
+        if (pick && pick.date === today && pick.language === lang) {
+          const stillValid = pool.some(w => w.word === pick.word);
+          if (stillValid) return pool.find(w => w.word === pick.word);
+        }
+
+        const seed = today.split("-").reduce((acc, n) => acc + parseInt(n, 10), 0) + lang.length;
+        const index = seed % pool.length;
+        const chosen = pool[index];
+
+        progress.dailyPick = { date: today, language: lang, word: chosen.word };
+        persistProgress();
+        return chosen;
+      };
+
+      const render = () => {
+        const langInfo = WORD_LISTS[settings.language];
+        setLangColor(settings.language);
+
+        $streakVal.textContent = progress.streak.count;
+        $streakBadge.classList.toggle("lit", progress.streak.count > 0);
+
+        currentWord = pickDailyWord(settings.language);
+
+        if (!currentWord) {
+          $wordEmoji.textContent = "🎉";
+          $wordMain.textContent = "All done!";
+          $wordMain.classList.remove("rtl");
+          $wordPron.textContent = "";
+          $translationMain.textContent = "Every word mastered";
+          $exampleText.textContent = "Add more words or switch languages in Settings.";
+          $masterToggle.style.display = "none";
+          $masterLabel.style.display = "none";
+          $lockNote.classList.remove("show");
+          return;
+        }
+
+        $masterToggle.style.display = "";
+        $masterLabel.style.display = "";
+
+        const isRtl = !!langInfo?.rtl;
+        $wordEmoji.textContent = currentWord.emoji || "📘";
+        $wordMain.textContent = currentWord.word;
+        $wordMain.classList.toggle("rtl", isRtl);
+        $wordPron.textContent = currentWord.pronunciation ? `( ${currentWord.pronunciation} )` : "";
+        $translationMain.textContent = currentWord.translation;
+        $exampleText.textContent = currentWord.example || "";
+
+        const masteredList = progress.mastered[settings.language] || [];
+        const alreadyMastered = masteredList.includes(currentWord.word);
+        const masteredTodayCount = getMasteredTodayCount();
+        const limitReached = masteredTodayCount >= DAILY_MASTER_LIMIT;
+
+        $masterToggle.classList.toggle("active", alreadyMastered);
+        // The toggle stays clickable if the word is already mastered
+        // (so the person can undo it), even past the daily limit — the
+        // limit only blocks NEW masters, not un-mastering a mistake.
+        const blocked = limitReached && !alreadyMastered;
+        $masterToggle.disabled = blocked;
+        $masterToggle.style.opacity = blocked ? "0.35" : "1";
+        $masterToggle.style.cursor = blocked ? "default" : "pointer";
+
+        if (alreadyMastered) {
+          $masterLabel.textContent = "Mastered";
+        } else if (blocked) {
+          $masterLabel.textContent = `Limit reached (${DAILY_MASTER_LIMIT}/${DAILY_MASTER_LIMIT} today)`;
+        } else {
+          $masterLabel.textContent = `Mark as mastered (${masteredTodayCount}/${DAILY_MASTER_LIMIT} today)`;
+        }
+
+        // The lock note only appears once the daily mastering limit is
+        // reached — that's the moment the person is actually stuck
+        // waiting for tomorrow. Before that, there's still progress to
+        // make today, so showing "new word tomorrow" would be misleading.
+        $lockNote.classList.toggle("show", limitReached);
+        $lockNoteText.textContent = "New word tomorrow";
+      };
+
+      // ---------- mark as mastered (up to DAILY_MASTER_LIMIT new masters per day) ----------
+      const toggleMastered = () => {
+        if (!currentWord) return;
+        if ($masterToggle.disabled) return; // safety net: label clicks bypass the native button disabled state
+        const lang = settings.language;
+        progress.mastered[lang] = progress.mastered[lang] || [];
+        const idx = progress.mastered[lang].indexOf(currentWord.word);
+
+        if (idx === -1) {
+          // Marking a NEW word as mastered — subject to the daily limit.
+          const count = getMasteredTodayCount();
+          if (count >= DAILY_MASTER_LIMIT) return; // blocked; button is disabled anyway, this is just a safety net
+          progress.mastered[lang].push(currentWord.word);
+          progress.masteredToday.count = count + 1;
+        } else {
+          // Un-mastering an already-mastered word doesn't consume or
+          // refund a daily slot — it's a correction, not new progress.
+          progress.mastered[lang].splice(idx, 1);
+        }
+
+        persistProgress();
+        progress.dailyPick = null; // force a fresh pick since today's word's status changed
+        render();
+      };
+      $masterToggle.addEventListener("click", toggleMastered);
+      $masterLabel.addEventListener("click", toggleMastered);
+
+      // ---------- settings: language picker ----------
+      const renderLangGrid = () => {
+        $langGrid.innerHTML = LANG_KEYS.map(key => {
+          const info = WORD_LISTS[key];
+          return `<button type="button" class="langBtn${key === settings.language ? " active" : ""}" data-lang="${key}" style="--btn-lang-color:${info.color}">${info.flag} ${escapeHtml(info.label)}</button>`;
+        }).join("");
+        updateProgressLine();
+      };
+
+      const updateProgressLine = () => {
+        const lang = settings.language;
+        const masteredCount = (progress.mastered[lang] || []).length;
+        const totalCount = getFullPool(lang).length;
+        const info = WORD_LISTS[lang];
+        $progressLine.innerHTML = `<b>${masteredCount}</b> of <b>${totalCount}</b> words mastered in ${escapeHtml(info?.label || lang)}`;
+      };
+
+      $langGrid.addEventListener("click", (e) => {
+        const btn = e.target.closest(".langBtn");
+        if (!btn) return;
+        settings.language = btn.dataset.lang;
+        persistSettings();
+        Array.from($langGrid.children).forEach(b => b.classList.toggle("active", b === btn));
+        updateProgressLine();
+        renderOwnWordsList();
+        render();
+      });
+
+      // ---------- settings: custom words ----------
+      const renderOwnWordsList = () => {
+        const list = progress.customWords[settings.language] || [];
+        if (list.length === 0) {
+          $ownWordsList.innerHTML = `<div style="font-size:10.5px;color:var(--tab-fg,#a8a8a8);text-align:center;padding:4px 0;">No custom words yet for ${escapeHtml(WORD_LISTS[settings.language]?.label || settings.language)}.</div>`;
+          return;
+        }
+        $ownWordsList.innerHTML = list.map((w, i) => `
+          <div class="ownWordRow">
+            <span>${escapeHtml(w.word)} — ${escapeHtml(w.translation)}</span>
+            <button type="button" data-idx="${i}" aria-label="Remove">✕</button>
+          </div>
+        `).join("");
+      };
+
+      $ownWordsList.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-idx]");
+        if (!btn) return;
+        const idx = Number(btn.dataset.idx);
+        const lang = settings.language;
+        progress.customWords[lang] = progress.customWords[lang] || [];
+        progress.customWords[lang].splice(idx, 1);
+        persistProgress();
+        renderOwnWordsList();
+        updateProgressLine();
+        render();
+      });
+
+      $addWordBtn.addEventListener("click", () => {
+        const word = $ownWordInput.value.trim();
+        const translation = $ownTransInput.value.trim();
+        if (!word || !translation) return;
+
+        const lang = settings.language;
+        progress.customWords[lang] = progress.customWords[lang] || [];
+        progress.customWords[lang].push({
+          word,
+          pronunciation: $ownPronInput.value.trim().slice(0, 60),
+          translation,
+          example: $ownExampleInput.value.trim().slice(0, 120),
+          emoji: "📝"
+        });
+        persistProgress();
+
+        $ownWordInput.value = "";
+        $ownPronInput.value = "";
+        $ownTransInput.value = "";
+        $ownExampleInput.value = "";
+        renderOwnWordsList();
+        updateProgressLine();
+        render();
+      });
+
+      // ---------- settings panel open/close ----------
+      const openSettingsPanel = () => {
+        renderLangGrid();
+        renderOwnWordsList();
+        $settingsPanel.classList.add("open");
+        $gearBtn.classList.add("open");
+      };
+      const closeSettingsPanel = () => {
+        $settingsPanel.classList.remove("open");
+        $gearBtn.classList.remove("open");
+      };
+
+      $gearBtn.addEventListener("click", () => {
+        if ($settingsPanel.classList.contains("open")) closeSettingsPanel();
+        else openSettingsPanel();
+      });
+      $closeSettings.addEventListener("click", closeSettingsPanel);
+      $saveSettings.addEventListener("click", () => {
+        closeSettingsPanel();
+        render();
+      });
+
+      $resetDataBtn.addEventListener("click", () => {
+        progress.mastered = {};
+        progress.dailyPick = null;
+        persistProgress();
+        render();
+        closeSettingsPanel();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!$settingsPanel.classList.contains("open")) return;
+        if (e.target === $gearBtn || $gearBtn.contains(e.target)) return;
+        if ($settingsPanel.contains(e.target)) return;
+        closeSettingsPanel();
+      });
+
+      // ---------- boot ----------
+      registerDailyActivity();
+      setLangColor(settings.language);
+      render();
+    })();
+  </script>
+</body>
+</html>
