@@ -27,12 +27,12 @@
       width: 100%;
       max-width: 340px;
       background: var(--card-bg, #221d19);
-      border-radius: 20px;
-      padding: 18px;
+      border-radius: 18px;
+      padding: 14px;
       box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 16px 40px rgba(0,0,0,0.35);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 9px;
       border: 1px solid var(--card-border, rgba(255,255,255,0.05));
     }
 
@@ -67,18 +67,18 @@
     .gearBtn.open { transform: rotate(40deg); opacity: 1; }
 
     /* ---------- Hero streak number ---------- */
-    .heroStreak { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 4px 0 0; }
+    .heroStreak { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: center; gap: 6px; padding: 0; }
     .heroNumber {
       font-family: Georgia, "Charter", "Times New Roman", serif;
-      font-weight: 700; font-size: 60px; line-height: 0.85; letter-spacing: -0.02em;
+      font-weight: 700; font-size: 42px; line-height: 0.85; letter-spacing: -0.02em;
       color: var(--fg, #f3ece3); font-variant-numeric: tabular-nums;
       text-shadow: 0 0 24px var(--accent-glow, rgba(255,138,61,0.25));
     }
-    .heroUnit { font-size: 13px; font-weight: 600; color: var(--accent, #ff8a3d); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 6px; }
-    .heroSub { text-align: center; font-size: 11px; color: var(--tab-fg, #a89a8c); margin-top: -8px; }
+    .heroUnit { font-size: 11.5px; font-weight: 600; color: var(--accent, #ff8a3d); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; }
+    .heroSub { text-align: center; font-size: 10.5px; color: var(--tab-fg, #a89a8c); margin-top: -4px; }
     .heroSub b { color: var(--fg, #f3ece3); font-weight: 700; }
 
-    .encourage { position: relative; z-index: 1; font-size: 11.5px; color: var(--mode-fg, #c4b6a8); text-align: center; padding: 0 6px; line-height: 1.45; }
+    .encourage { position: relative; z-index: 1; font-size: 10.5px; color: var(--mode-fg, #c4b6a8); text-align: center; padding: 0 6px; line-height: 1.3; }
     .encourage .spark { color: var(--accent, #ff8a3d); font-weight: 700; }
 
     /* ---------- View toggle (Weeks / Month) ---------- */
@@ -87,7 +87,7 @@
       border-radius: 11px; padding: 3px;
     }
     .viewToggle button {
-      flex: 1; border: none; background: transparent; padding: 6px 4px; font-size: 11px; font-weight: 600;
+      flex: 1; border: none; background: transparent; padding: 5px 4px; font-size: 10.5px; font-weight: 600;
       color: var(--mode-fg, #c4b6a8); border-radius: 8px; cursor: pointer; transition: background .15s ease, color .15s ease;
     }
     .viewToggle button.active { background: var(--card-bg, #221d19); color: var(--fg, #f3ece3); box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset; }
@@ -152,6 +152,12 @@
       content: ""; position: absolute; inset: -2px; border-radius: 9px;
       border: 1.5px solid var(--accent, #ff8a3d); pointer-events: none;
     }
+    /* Visible outline on whichever cell the picker is currently editing —
+       distinct from .today (always accent-colored) so the two states
+       don't visually collide when editing a day that isn't today. */
+    .calCell.selected {
+      box-shadow: 0 0 0 2px var(--fg, #f3ece3) inset;
+    }
     .calCell.multi {
       background: conic-gradient(var(--seg1, #ef5fa3) 0deg 120deg, var(--seg2, #ef4444) 120deg 240deg, var(--seg3, #c084fc) 240deg 360deg);
     }
@@ -173,7 +179,7 @@
     /* ---------- Month summary (platform breakdown) ---------- */
     .monthSummary { display: none; flex-direction: column; gap: 6px; }
     .monthSummary.show { display: flex; }
-    .summaryRow { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+    .summaryRow { display: flex; align-items: center; gap: 7px; font-size: 10px; }
     .summaryDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .summaryName { flex: 1; color: var(--mode-fg, #c4b6a8); }
     .summaryCount { font-weight: 700; color: var(--fg, #f3ece3); font-variant-numeric: tabular-nums; }
@@ -188,8 +194,8 @@
 
     /* ---------- "I posted today" button + platform picker ---------- */
     .postBtn {
-      position: relative; z-index: 1; width: 100%; border: none; border-radius: 13px; padding: 12px 0;
-      font-size: 13px; font-weight: 700; cursor: pointer; background: var(--accent, #ff8a3d); color: #1a1410;
+      position: relative; z-index: 1; width: 100%; border: none; border-radius: 12px; padding: 10px 0;
+      font-size: 12.5px; font-weight: 700; cursor: pointer; background: var(--accent, #ff8a3d); color: #1a1410;
       transition: opacity .15s ease, transform .05s ease; letter-spacing: 0.01em;
     }
     .postBtn:hover { opacity: 0.92; }
@@ -672,6 +678,7 @@
         if (isToday) cell.classList.add("today");
         if (linkedKeys.has(key)) cell.classList.add("linked");
         if (hasEntry) cell.classList.add("hasPost");
+        if (selectedDateKey === key) cell.classList.add("selected");
 
         if (isFuture) {
           cell.classList.add("future");
@@ -873,6 +880,13 @@
       const formatDateForLabel = (key) => parseKey(key).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
       const openPickerFor = (key) => {
+        // Clear any previous selection highlight, then mark the newly
+        // chosen cell — done directly on the DOM rather than waiting for
+        // a full grid re-render, so the outline appears immediately.
+        $calGrid.querySelectorAll(".calCell.selected").forEach(c => c.classList.remove("selected"));
+        const targetCell = $calGrid.querySelector(`.calCell[data-date="${key}"]`);
+        if (targetCell) targetCell.classList.add("selected");
+
         selectedDateKey = key;
         pendingPlatforms = new Set(postData.days[key] || []);
         pendingExtras = JSON.parse(JSON.stringify(postData.notes[key] || {}));
@@ -897,6 +911,7 @@
         $confirmRow.classList.add("open");
       };
       const closePicker = () => {
+        $calGrid.querySelectorAll(".calCell.selected").forEach(c => c.classList.remove("selected"));
         $platformPicker.classList.remove("open");
         $editingDateLabel.classList.remove("open");
         $confirmRow.classList.remove("open");
