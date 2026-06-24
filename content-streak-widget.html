@@ -182,11 +182,27 @@
       aspect-ratio: 1;
       border-radius: 7px;
       background: var(--cell-empty, #2c2520);
-      transition: transform .08s ease;
+      transition: transform .08s ease, background .12s ease;
+      /* reset native <button> styling so it matches the plain <div> look it replaces */
+      border: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
+    .chainCell:hover { transform: scale(1.08); }
+    .chainCell:active { transform: scale(0.94); }
     .chainCell.future {
       background: transparent;
       border: 1px dashed var(--cell-empty, #382f28);
+    }
+    /* Planned-ahead post: dashed outline in the platform's color, not a
+       solid fill — visually distinct from "already posted" so it reads
+       as scheduled rather than done, and doesn't fill in like a real day. */
+    .chainCell.future.planned {
+      background: transparent;
+      border: 1.5px dashed var(--planned-color, #6b7280);
     }
     .chainCell.today {
       box-shadow: 0 0 0 1.5px var(--accent, #ff8a3d) inset;
@@ -256,6 +272,20 @@
       gap: 6px;
     }
     .platformPicker.open { display: flex; }
+
+    .editingDateLabel {
+      display: none;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--tab-fg, #8a7c6e);
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+    .editingDateLabel.open { display: block; }
+    .editingDateLabel .planned-tag {
+      color: var(--accent, #ff8a3d);
+      font-weight: 700;
+    }
 
     .platformRow { display: flex; flex-direction: column; gap: 6px; }
     .platformChip {
@@ -478,6 +508,7 @@
 
     <!-- Post button + platform picker -->
     <button class="postBtn" id="postBtn">I posted today</button>
+    <div class="editingDateLabel" id="editingDateLabel"></div>
     <div class="platformPicker" id="platformPicker"></div>
     <div class="confirmRow" id="confirmRow">
       <button type="button" class="cancelBtn" id="cancelPostBtn">Cancel</button>
@@ -671,6 +702,7 @@
       const $chainDayLabels    = document.getElementById("chainDayLabels");
       const $legendRow         = document.getElementById("legendRow");
       const $postBtn           = document.getElementById("postBtn");
+      const $editingDateLabel  = document.getElementById("editingDateLabel");
       const $platformPicker    = document.getElementById("platformPicker");
       const $confirmRow        = document.getElementById("confirmRow");
       const $confirmPostBtn    = document.getElementById("confirmPostBtn");
@@ -690,6 +722,7 @@
       const $resetDataBtn   = document.getElementById("resetDataBtn");
 
       let pendingPlatforms = new Set();
+      let selectedDateKey = null; // the date currently being edited in the picker — set when any cell or the main button is clicked
 
       const applyTheme = (theme) => {
         VALID_THEMES.forEach(t => document.body.classList.remove("theme-" + t));
@@ -714,7 +747,13 @@
       };
 
       const computeBestStreak = () => {
-        const keys = Object.keys(postData.days).filter(k => hasPostOn(k)).sort();
+        const today = startOfDay(new Date());
+        // Exclude future-dated entries (planned-ahead posts) from the best-streak
+        // scan — a future day shouldn't inflate a historical record until it
+        // actually arrives, even though it's already filled in for planning.
+        const keys = Object.keys(postData.days)
+          .filter(k => hasPostOn(k) && startOfDay(new Date(k)) <= today)
+          .sort();
         if (keys.length === 0) return 0;
         let best = 1, run = 1;
         for (let i = 1; i < keys.length; i++) {
@@ -791,28 +830,41 @@
           const isToday = key === todayKey();
           const isFuture = startOfDay(d) > today;
           const platformSlots = Array.isArray(postData.days[key]) ? postData.days[key] : [];
+          const hasEntry = platformSlots.length > 0;
 
-          const cell = document.createElement("div");
+          const cell = document.createElement("button");
+          cell.type = "button";
           cell.className = "chainCell";
           cell.dataset.date = key;
 
-          if (isFuture) {
-            cell.classList.add("future");
-          } else {
-            const dayNotes = postData.notes[key] || {};
-            const parts = platformSlots.map(slot => {
-              const slotNote = dayNotes[slot] || {};
-              const displayName = (slot === "p4" && slotNote.label) ? slotNote.label : (settings.platforms[slot]?.name || slot);
-              return slotNote.note ? `${displayName}: ${slotNote.note}` : displayName;
-            });
-            cell.title = key + (parts.length ? " — " + parts.join(" · ") : "");
-          }
+          const dayNotes = postData.notes[key] || {};
+          const parts = platformSlots.map(slot => {
+            const slotNote = dayNotes[slot] || {};
+            const displayName = (slot === "p4" && slotNote.label) ? slotNote.label : (settings.platforms[slot]?.name || slot);
+            return slotNote.note ? `${displayName}: ${slotNote.note}` : displayName;
+          });
+          const suffix = parts.length ? " — " + parts.join(" · ") + (isFuture ? " (planned)" : "") : "";
+          cell.title = key + suffix;
+
           if (isToday) cell.classList.add("today");
           if (linkedKeys.has(key)) cell.classList.add("linked");
 
-          if (!isFuture && platformSlots.length === 1) {
+          if (isFuture) {
+            cell.classList.add("future");
+            if (hasEntry) {
+              // Planned-ahead post: shown as a dashed outline in the
+              // platform's color rather than a solid fill, so it visually
+              // reads as "scheduled" rather than "already happened" —
+              // and it deliberately does NOT count toward the streak
+              // until the date actually arrives (handled in the streak
+              // calculation functions, not here).
+              cell.classList.add("planned");
+              const plannedColor = settings.platforms[platformSlots[0]]?.color || "#6b7280";
+              cell.style.setProperty("--planned-color", plannedColor);
+            }
+          } else if (platformSlots.length === 1) {
             cell.style.background = settings.platforms[platformSlots[0]]?.color || "#6b7280";
-          } else if (!isFuture && platformSlots.length > 1) {
+          } else if (platformSlots.length > 1) {
             cell.classList.add("multi");
             const colors = platformSlots.slice(0, 3).map(slot => settings.platforms[slot]?.color || "#6b7280");
             while (colors.length < 3) colors.push(colors[colors.length - 1]);
@@ -874,8 +926,16 @@
         });
       };
 
-      const openPicker = () => {
-        const key = todayKey();
+      const formatDateForLabel = (key) => {
+        const d = new Date(key + "T00:00:00");
+        return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+      };
+
+      // Opens the picker for an arbitrary date (today, past, or future).
+      // Used both by the main "I posted today" button (key = today) and by
+      // clicking any cell directly in the heatmap.
+      const openPickerFor = (key) => {
+        selectedDateKey = key;
         pendingPlatforms = new Set(postData.days[key] || []);
         pendingExtras = JSON.parse(JSON.stringify(postData.notes[key] || {}));
 
@@ -889,18 +949,41 @@
           textarea.value = (pendingExtras[textarea.dataset.slot] && pendingExtras[textarea.dataset.slot].note) || "";
         });
 
+        const isFutureDate = startOfDay(new Date(key + "T00:00:00")) > startOfDay(new Date());
+        $editingDateLabel.innerHTML = key === todayKey()
+          ? "Editing today"
+          : `Editing ${formatDateForLabel(key)}${isFutureDate ? ' <span class="planned-tag">· planned</span>' : ""}`;
+        $editingDateLabel.classList.add("open");
+
         syncExtraVisibility();
         $platformPicker.classList.add("open");
         $confirmRow.classList.add("open");
       };
       const closePicker = () => {
         $platformPicker.classList.remove("open");
+        $editingDateLabel.classList.remove("open");
         $confirmRow.classList.remove("open");
+        selectedDateKey = null;
       };
 
       $postBtn.addEventListener("click", () => {
         if ($platformPicker.classList.contains("open")) closePicker();
-        else openPicker();
+        else openPickerFor(todayKey());
+      });
+
+      // Any cell in the heatmap — past, today, or future — opens the same
+      // picker for that specific date, enabling both retroactive logging
+      // and ahead-of-time planning.
+      $chainGrid.addEventListener("click", (e) => {
+        const cell = e.target.closest(".chainCell");
+        if (!cell) return;
+        const key = cell.dataset.date;
+        if (!key) return;
+        if ($platformPicker.classList.contains("open") && selectedDateKey === key) {
+          closePicker();
+        } else {
+          openPickerFor(key);
+        }
       });
 
       $platformPicker.addEventListener("click", (e) => {
@@ -927,7 +1010,8 @@
       });
 
       $confirmPostBtn.addEventListener("click", () => {
-        const key = todayKey();
+        const key = selectedDateKey;
+        if (!key) return; // picker wasn't actually open on a date — nothing to save
         // Only fall back to "Other" as a default when the day has no
         // existing entry at all (first-time log with nothing picked).
         // If the user is editing an existing day and explicitly clears
