@@ -5,20 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Content Streak — Swiftry</title>
   <style>
-    /* ---------- Reset & base ---------- */
     *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
 
-    @font-face {
-      /* Using a system stack tuned for a condensed, high-contrast display
-         number — no external font request, so the widget stays a single
-         self-contained file with zero network dependency. */
-      font-family: "StreakDisplay";
-      src: local("Charter Bold"), local("Georgia Bold");
-    }
-
     body {
-      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                    "Helvetica Neue", Arial, sans-serif;
       background: var(--bg, #191512);
       color: var(--fg, #f3ece3);
@@ -29,7 +20,6 @@
       justify-content: center;
       padding: 16px;
       overflow: hidden;
-      transition: background .2s ease, color .2s ease;
     }
 
     .card {
@@ -39,17 +29,13 @@
       background: var(--card-bg, #221d19);
       border-radius: 20px;
       padding: 18px;
-      box-shadow:
-        0 1px 0 rgba(255,255,255,0.03) inset,
-        0 16px 40px rgba(0,0,0,0.35);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 16px 40px rgba(0,0,0,0.35);
       display: flex;
       flex-direction: column;
       gap: 14px;
-      transition: background .2s ease;
       border: 1px solid var(--card-border, rgba(255,255,255,0.05));
     }
 
-    /* Faint warm glow behind the card, like studio key-light spill */
     .glow {
       position: absolute;
       top: -40%;
@@ -65,325 +51,198 @@
     }
 
     /* ---------- Header ---------- */
-    .header {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-right: 28px;
-    }
-    .eyebrow {
-      font-size: 9.5px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--accent, #ff8a3d);
-      opacity: 0.85;
-    }
-    .title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--fg, #f3ece3);
-      letter-spacing: -0.01em;
-      margin-top: 1px;
-    }
+    .header { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding-right: 28px; }
+    .eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent, #ff8a3d); opacity: 0.85; }
+    .title { font-size: 15px; font-weight: 700; color: var(--fg, #f3ece3); letter-spacing: -0.01em; margin-top: 1px; }
 
     .gearBtn {
-      position: absolute;
-      top: 0px;
-      right: -2px;
-      width: 26px;
-      height: 26px;
-      border-radius: 8px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--tab-fg, #a89a8c);
-      opacity: 0.7;
-      transition: opacity .15s ease, background .15s ease, transform .2s ease;
-      z-index: 4;
+      position: absolute; top: 0; right: -2px; width: 26px; height: 26px; border-radius: 8px;
+      background: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; color: var(--tab-fg, #a89a8c); opacity: 0.7;
+      transition: opacity .15s ease, background .15s ease, transform .2s ease; z-index: 4;
     }
     .gearBtn:hover { opacity: 1; background: var(--btn-bg-hover, rgba(255,255,255,0.06)); }
     .gearBtn:active { transform: scale(0.92); }
     .gearBtn svg { width: 15px; height: 15px; }
     .gearBtn.open { transform: rotate(40deg); opacity: 1; }
 
-    /* ---------- Hero streak number — the signature element ---------- */
-    .heroStreak {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 8px;
-      padding: 6px 0 2px;
-    }
+    /* ---------- Hero streak number ---------- */
+    .heroStreak { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 4px 0 0; }
     .heroNumber {
       font-family: Georgia, "Charter", "Times New Roman", serif;
-      font-weight: 700;
-      font-size: 64px;
-      line-height: 0.85;
-      letter-spacing: -0.02em;
-      color: var(--fg, #f3ece3);
-      font-variant-numeric: tabular-nums;
+      font-weight: 700; font-size: 60px; line-height: 0.85; letter-spacing: -0.02em;
+      color: var(--fg, #f3ece3); font-variant-numeric: tabular-nums;
       text-shadow: 0 0 24px var(--accent-glow, rgba(255,138,61,0.25));
     }
-    .heroUnit {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent, #ff8a3d);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding-bottom: 8px;
-    }
-    .heroSub {
-      text-align: center;
-      font-size: 11px;
-      color: var(--tab-fg, #a89a8c);
-      margin-top: -6px;
-    }
+    .heroUnit { font-size: 13px; font-weight: 600; color: var(--accent, #ff8a3d); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 6px; }
+    .heroSub { text-align: center; font-size: 11px; color: var(--tab-fg, #a89a8c); margin-top: -8px; }
     .heroSub b { color: var(--fg, #f3ece3); font-weight: 700; }
 
-    .encourage {
-      position: relative;
-      z-index: 1;
-      font-size: 11.5px;
-      color: var(--mode-fg, #c4b6a8);
-      text-align: center;
-      padding: 0 6px;
-      line-height: 1.45;
-    }
+    .encourage { position: relative; z-index: 1; font-size: 11.5px; color: var(--mode-fg, #c4b6a8); text-align: center; padding: 0 6px; line-height: 1.45; }
     .encourage .spark { color: var(--accent, #ff8a3d); font-weight: 700; }
 
-    /* ---------- Chain heatmap: the signature visual ---------- */
-    .chainWrap { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; }
-    .chainDayLabels {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
-      font-size: 8.5px;
-      font-weight: 600;
-      color: var(--tab-fg, #8a7c6e);
-      text-align: center;
-      letter-spacing: 0.02em;
+    /* ---------- View toggle (Weeks / Month) ---------- */
+    .viewToggle {
+      position: relative; z-index: 1; display: flex; gap: 4px; background: var(--cell-empty, #2c2520);
+      border-radius: 11px; padding: 3px;
     }
-    .chainGrid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
-      position: relative;
+    .viewToggle button {
+      flex: 1; border: none; background: transparent; padding: 6px 4px; font-size: 11px; font-weight: 600;
+      color: var(--mode-fg, #c4b6a8); border-radius: 8px; cursor: pointer; transition: background .15s ease, color .15s ease;
     }
-    .chainCell {
+    .viewToggle button.active { background: var(--card-bg, #221d19); color: var(--fg, #f3ece3); box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset; }
+
+    /* ---------- Calendar grid (shared by both weeks-view and month-view) ---------- */
+    .calWrap { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; }
+    .calMonthLabel { display: none; font-size: 11px; font-weight: 700; color: var(--fg, #f3ece3); text-align: center; }
+    .calMonthLabel.show { display: block; }
+    .calDayLabels {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; font-size: 8.5px; font-weight: 600;
+      color: var(--tab-fg, #8a7c6e); text-align: center; letter-spacing: 0.02em;
+    }
+    .calGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+
+    .calCell {
       position: relative;
       aspect-ratio: 1;
       border-radius: 7px;
       background: var(--cell-empty, #2c2520);
-      transition: transform .08s ease, background .12s ease;
-      /* reset native <button> styling so it matches the plain <div> look it replaces */
       border: none;
       padding: 0;
       margin: 0;
       font: inherit;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      transition: transform .08s ease, background .12s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .chainCell:hover { transform: scale(1.08); }
-    .chainCell:active { transform: scale(0.94); }
-    .chainCell.future {
-      background: transparent;
-      border: 1px dashed var(--cell-empty, #382f28);
-    }
-    /* Planned-ahead post: dashed outline in the platform's color, not a
-       solid fill — visually distinct from "already posted" so it reads
-       as scheduled rather than done, and doesn't fill in like a real day. */
-    .chainCell.future.planned {
-      background: transparent;
-      border: 1.5px dashed var(--planned-color, #6b7280);
-    }
-    .chainCell.today {
-      box-shadow: 0 0 0 1.5px var(--accent, #ff8a3d) inset;
-    }
-    .chainCell.multi {
-      background: conic-gradient(
-        var(--seg1, #ef5fa3) 0deg 120deg,
-        var(--seg2, #ef4444) 120deg 240deg,
-        var(--seg3, #c084fc) 240deg 360deg
-      );
-    }
-    /* The "chain link" mark: a small bright notch drawn on cells that are
-       part of the CURRENT active streak run, distinct from older posted
-       days elsewhere in the grid which stay in their plain platform color.
-       This is what makes the current streak read as one continuous chain
-       rather than just "a bunch of colored squares". */
-    .chainCell.linked::after {
-      content: "";
-      position: absolute;
-      inset: -2.5px;
-      border-radius: 9px;
-      border: 1.5px solid var(--accent, #ff8a3d);
+    .calCell:hover { transform: scale(1.07); }
+    .calCell:active { transform: scale(0.94); }
+
+    /* The day number, shown on every cell — this is the piece that was
+       missing before: without it there's no way to tell which day a
+       square represents without hovering for the tooltip. */
+    .calCellNum {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: var(--day-num-color, rgba(255,255,255,0.55));
+      line-height: 1;
       pointer-events: none;
     }
+    /* On a colored (posted) cell the number needs to stay legible against
+       whatever platform color fills the background, so it switches to a
+       semi-opaque dark/light chip rather than relying on contrast alone. */
+    .calCell.hasPost .calCellNum {
+      color: #1a1410;
+      background: rgba(255,255,255,0.55);
+      border-radius: 4px;
+      padding: 1px 3px;
+      font-size: 9px;
+    }
+    body.theme-light .calCell.hasPost .calCellNum { color: #fff; background: rgba(0,0,0,0.35); }
+
+    .calCell.outsideMonth { opacity: 0.28; }
+    .calCell.empty { background: var(--cell-empty, #2c2520); }
+    .calCell.future:not(.planned) { background: transparent; border: 1px dashed var(--cell-empty, #382f28); }
+    .calCell.future.planned { background: transparent; border: 1.5px dashed var(--planned-color, #6b7280); }
+    .calCell.today { box-shadow: 0 0 0 1.5px var(--accent, #ff8a3d) inset; }
+    .calCell.linked::after {
+      content: ""; position: absolute; inset: -2px; border-radius: 9px;
+      border: 1.5px solid var(--accent, #ff8a3d); pointer-events: none;
+    }
+    .calCell.multi {
+      background: conic-gradient(var(--seg1, #ef5fa3) 0deg 120deg, var(--seg2, #ef4444) 120deg 240deg, var(--seg3, #c084fc) 240deg 360deg);
+    }
+
+    .monthNav {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .monthNav.show { display: flex; }
+    .monthNavBtn {
+      width: 24px; height: 24px; border: none; background: var(--cell-empty, #2c2520); border-radius: 7px;
+      color: var(--fg, #f3ece3); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .monthNavBtn:hover { background: var(--btn-bg-hover, rgba(255,255,255,0.08)); }
+    .monthNavBtn svg { width: 13px; height: 13px; }
+    .monthNavBtn:disabled { opacity: 0.3; cursor: default; }
+
+    /* ---------- Month summary (platform breakdown) ---------- */
+    .monthSummary { display: none; flex-direction: column; gap: 6px; }
+    .monthSummary.show { display: flex; }
+    .summaryRow { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+    .summaryDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .summaryName { flex: 1; color: var(--mode-fg, #c4b6a8); }
+    .summaryCount { font-weight: 700; color: var(--fg, #f3ece3); font-variant-numeric: tabular-nums; }
+    .summaryBar { height: 4px; border-radius: 2px; background: var(--cell-empty, #2c2520); flex: 2; overflow: hidden; }
+    .summaryBarFill { height: 100%; border-radius: 2px; }
+    .monthTotalLine { font-size: 10.5px; color: var(--tab-fg, #8a7c6e); text-align: center; }
 
     /* ---------- Legend ---------- */
-    .legend {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
-      font-size: 9.5px;
-      color: var(--mode-fg, #c4b6a8);
-    }
+    .legend { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 9px; font-size: 9.5px; color: var(--mode-fg, #c4b6a8); }
     .legendItem { display: inline-flex; align-items: center; gap: 4px; }
     .legendDot { width: 7px; height: 7px; border-radius: 3px; flex-shrink: 0; }
 
     /* ---------- "I posted today" button + platform picker ---------- */
     .postBtn {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      border: none;
-      border-radius: 13px;
-      padding: 12px 0;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      background: var(--accent, #ff8a3d);
-      color: #1a1410;
-      transition: opacity .15s ease, transform .05s ease;
-      letter-spacing: 0.01em;
+      position: relative; z-index: 1; width: 100%; border: none; border-radius: 13px; padding: 12px 0;
+      font-size: 13px; font-weight: 700; cursor: pointer; background: var(--accent, #ff8a3d); color: #1a1410;
+      transition: opacity .15s ease, transform .05s ease; letter-spacing: 0.01em;
     }
     .postBtn:hover { opacity: 0.92; }
     .postBtn:active { transform: scale(0.985); }
-    .postBtn.already {
-      background: var(--cell-empty, #2c2520);
-      color: var(--mode-fg, #c4b6a8);
-    }
+    .postBtn.already { background: var(--cell-empty, #2c2520); color: var(--mode-fg, #c4b6a8); }
 
-    .platformPicker {
-      position: relative;
-      z-index: 1;
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .platformPicker.open { display: flex; }
-
-    .editingDateLabel {
-      display: none;
-      font-size: 10.5px;
-      font-weight: 600;
-      color: var(--tab-fg, #8a7c6e);
-      text-align: center;
-      letter-spacing: 0.02em;
-    }
+    .editingDateLabel { display: none; font-size: 10.5px; font-weight: 600; color: var(--tab-fg, #8a7c6e); text-align: center; letter-spacing: 0.02em; }
     .editingDateLabel.open { display: block; }
-    .editingDateLabel .planned-tag {
-      color: var(--accent, #ff8a3d);
-      font-weight: 700;
-    }
+    .editingDateLabel .planned-tag { color: var(--accent, #ff8a3d); font-weight: 700; }
 
+    .platformPicker { position: relative; z-index: 1; display: none; flex-direction: column; gap: 6px; }
+    .platformPicker.open { display: flex; }
     .platformRow { display: flex; flex-direction: column; gap: 6px; }
     .platformChip {
-      font-size: 11.5px;
-      font-weight: 600;
-      padding: 8px 10px;
-      border-radius: 11px;
-      border: 1.5px solid var(--btn-border, rgba(255,255,255,0.1));
-      background: var(--card-bg, #221d19);
-      color: var(--mode-fg, #c4b6a8);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      font-size: 11.5px; font-weight: 600; padding: 8px 10px; border-radius: 11px;
+      border: 1.5px solid var(--btn-border, rgba(255,255,255,0.1)); background: var(--card-bg, #221d19);
+      color: var(--mode-fg, #c4b6a8); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
       transition: background .12s ease, border-color .12s ease, color .12s ease;
     }
     .platformChip .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .platformChip.active { border-color: var(--chip-color, currentColor); color: var(--chip-color, currentColor); background: var(--chip-bg, rgba(255,255,255,0.04)); }
 
-    /* Per-platform inline fields shown under an active chip: a name
-       override for the "Other" slot specifically (per-day, not a
-       permanent rename), and a free-text note for what was posted —
-       available for every platform, not just "Other". */
-    .platformExtra {
-      display: none;
-      flex-direction: column;
-      gap: 5px;
-      padding-left: 4px;
-    }
+    .platformExtra { display: none; flex-direction: column; gap: 5px; padding-left: 4px; }
     .platformExtra.open { display: flex; }
-    .platformExtra input,
-    .platformExtra textarea {
-      width: 100%;
-      font: inherit;
-      font-size: 12px;
-      padding: 7px 10px;
-      border-radius: 9px;
-      border: 1px solid var(--btn-border, rgba(255,255,255,0.1));
-      background: var(--cell-empty, #2c2520);
-      color: var(--fg, #f3ece3);
-      outline: none;
-      resize: none;
+    .platformExtra input, .platformExtra textarea {
+      width: 100%; font: inherit; font-size: 12px; padding: 7px 10px; border-radius: 9px;
+      border: 1px solid var(--btn-border, rgba(255,255,255,0.1)); background: var(--cell-empty, #2c2520);
+      color: var(--fg, #f3ece3); outline: none; resize: none;
     }
-    .platformExtra input:focus,
-    .platformExtra textarea:focus { border-color: var(--accent, #ff8a3d); }
-    .platformExtra input::placeholder,
-    .platformExtra textarea::placeholder { color: var(--tab-fg, #8a7c6e); }
+    .platformExtra input:focus, .platformExtra textarea:focus { border-color: var(--accent, #ff8a3d); }
+    .platformExtra input::placeholder, .platformExtra textarea::placeholder { color: var(--tab-fg, #8a7c6e); }
     .platformExtra textarea { min-height: 44px; line-height: 1.4; font-size: 11.5px; }
 
     .confirmRow { position: relative; z-index: 1; display: none; gap: 6px; }
     .confirmRow.open { display: flex; }
-    .confirmRow button {
-      flex: 1;
-      border: none;
-      border-radius: 11px;
-      padding: 9px 0;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
+    .confirmRow button { flex: 1; border: none; border-radius: 11px; padding: 9px 0; font-size: 12px; font-weight: 700; cursor: pointer; }
     .confirmBtn { background: var(--accent, #ff8a3d); color: #1a1410; }
     .cancelBtn { background: transparent; color: var(--mode-fg, #c4b6a8); border: 1px solid var(--btn-border, rgba(255,255,255,0.1)) !important; }
 
-    /* ---------- Footer ---------- */
-    .footer {
-      position: relative;
-      z-index: 1;
-      font-size: 9.5px;
-      color: var(--footer-fg, #5e5347);
-      text-align: center;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
+    .footer { position: relative; z-index: 1; font-size: 9.5px; color: var(--footer-fg, #5e5347); text-align: center; letter-spacing: 0.04em; text-transform: uppercase; }
 
     /* ---------- Settings panel ---------- */
     .settingsPanel {
-      position: absolute;
-      inset: 0;
-      background: var(--card-bg, #221d19);
-      border-radius: 20px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(4px);
-      transition: opacity .16s ease, transform .16s ease, visibility .16s;
-      z-index: 5;
-      overflow-y: auto;
+      position: absolute; inset: 0; background: var(--card-bg, #221d19); border-radius: 20px; padding: 18px;
+      display: flex; flex-direction: column; gap: 14px; opacity: 0; visibility: hidden; transform: translateY(4px);
+      transition: opacity .16s ease, transform .16s ease, visibility .16s; z-index: 5; overflow-y: auto;
     }
     .settingsPanel.open { opacity: 1; visibility: visible; transform: translateY(0); }
     .settingsHead { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--card-bg, #221d19); }
     .settingsHead h2 { font-size: 13px; font-weight: 700; margin: 0; color: var(--fg, #f3ece3); }
     .closeBtn {
-      width: 24px; height: 24px; border: none; background: transparent; cursor: pointer;
-      color: var(--tab-fg, #a89a8c); display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 6px;
+      width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; color: var(--tab-fg, #a89a8c);
+      display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;
     }
     .closeBtn:hover { background: var(--btn-bg-hover, rgba(255,255,255,0.06)); }
     .closeBtn svg { width: 15px; height: 15px; }
@@ -405,27 +264,18 @@
     .colorRow { display: flex; align-items: center; gap: 10px; }
     .colorRow input[type="color"] { width: 32px; height: 32px; border: none; border-radius: 9px; cursor: pointer; padding: 0; background: none; flex-shrink: 0; }
     .swatches { display: flex; gap: 6px; flex: 1; }
-    .swatch {
-      width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
-      transition: border-color .15s ease, transform .1s ease; padding: 0;
-    }
+    .swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color .15s ease, transform .1s ease; padding: 0; }
     .swatch:hover { transform: scale(1.08); }
     .swatch.active { border-color: var(--fg, #f3ece3); }
 
-    .platformRow { display: flex; align-items: center; gap: 8px; }
-    .platformRow input[type="color"] { width: 26px; height: 26px; border: none; border-radius: 8px; cursor: pointer; padding: 0; flex-shrink: 0; }
-    .platformRow input[type="text"] {
-      flex: 1;
-      font: inherit;
-      font-size: 12px;
-      padding: 7px 9px;
-      border-radius: 9px;
-      border: 1px solid var(--btn-border, rgba(255,255,255,0.1));
-      background: var(--cell-empty, #2c2520);
-      color: var(--fg, #f3ece3);
-      outline: none;
+    .platformRowSetting { display: flex; align-items: center; gap: 8px; }
+    .platformRowSetting input[type="color"] { width: 26px; height: 26px; border: none; border-radius: 8px; cursor: pointer; padding: 0; flex-shrink: 0; }
+    .platformRowSetting input[type="text"] {
+      flex: 1; font: inherit; font-size: 12px; padding: 7px 9px; border-radius: 9px;
+      border: 1px solid var(--btn-border, rgba(255,255,255,0.1)); background: var(--cell-empty, #2c2520);
+      color: var(--fg, #f3ece3); outline: none;
     }
-    .platformRow input[type="text"]:focus { border-color: var(--accent, #ff8a3d); }
+    .platformRowSetting input[type="text"]:focus { border-color: var(--accent, #ff8a3d); }
 
     .settingsFoot { display: flex; gap: 8px; padding-top: 4px; position: sticky; bottom: 0; background: var(--card-bg, #221d19); }
     .settingsFoot button { flex: 1; border: none; border-radius: 11px; padding: 9px 0; font-size: 12px; font-weight: 700; cursor: pointer; }
@@ -438,34 +288,28 @@
     }
     .dangerBtn:hover { background: var(--btn-bg-hover, rgba(255,255,255,0.06)); }
 
-    @media (max-width: 260px) {
-      .card { max-width: 100%; }
-      .heroNumber { font-size: 50px; }
-    }
+    @media (max-width: 260px) { .card { max-width: 100%; } .heroNumber { font-size: 48px; } }
 
-    /* ---------- Theme variants — all share the studio-warm identity,
-       light/sunset soften the same palette rather than reverting to a
-       generic SaaS light mode, to keep the signature consistent. ---------- */
     body.theme-dark {
       --bg: #191512; --fg: #f3ece3; --card-bg: #221d19; --card-border: rgba(255,255,255,0.05);
       --tab-fg: #a89a8c; --cell-empty: #2c2520; --mode-fg: #c4b6a8; --btn-bg: #221d19;
       --btn-border: rgba(255,255,255,0.1); --btn-bg-hover: rgba(255,255,255,0.06);
-      --footer-fg: #5e5347; --danger: #ef6b5e; --divider: rgba(255,255,255,0.07);
-      --accent-glow: rgba(255,138,61,0.25);
+      --footer-fg: #5e5347; --danger: #ef6b5e; --divider: rgba(255,255,255,0.07); --accent-glow: rgba(255,138,61,0.25);
+      --day-num-color: rgba(255,255,255,0.45);
     }
     body.theme-light {
       --bg: #f4ede3; --fg: #2c2218; --card-bg: #fffaf2; --card-border: rgba(0,0,0,0.04);
       --tab-fg: #9a8a78; --cell-empty: #ece1d2; --mode-fg: #6b5d4d; --btn-bg: #fffaf2;
       --btn-border: rgba(0,0,0,0.08); --btn-bg-hover: #f3e9da;
-      --footer-fg: #b3a18c; --danger: #d9534f; --divider: rgba(0,0,0,0.06);
-      --accent-glow: rgba(255,138,61,0.18);
+      --footer-fg: #b3a18c; --danger: #d9534f; --divider: rgba(0,0,0,0.06); --accent-glow: rgba(255,138,61,0.18);
+      --day-num-color: rgba(0,0,0,0.4);
     }
     body.theme-sunset {
       --bg: #2b1610; --fg: #ffe8d6; --card-bg: #3a1f16; --card-border: rgba(255,255,255,0.06);
       --tab-fg: #d6a98c; --cell-empty: #432519; --mode-fg: #e3bda3; --btn-bg: #3a1f16;
       --btn-border: rgba(255,255,255,0.12); --btn-bg-hover: rgba(255,255,255,0.08);
-      --footer-fg: #7a4a36; --danger: #ff8a6b; --divider: rgba(255,255,255,0.08);
-      --accent-glow: rgba(255,138,61,0.3);
+      --footer-fg: #7a4a36; --danger: #ff8a6b; --divider: rgba(255,255,255,0.08); --accent-glow: rgba(255,138,61,0.3);
+      --day-num-color: rgba(255,255,255,0.45);
     }
   </style>
 </head>
@@ -473,16 +317,13 @@
   <main class="card" role="region" aria-label="Posting streak tracker">
     <div class="glow"></div>
 
-    <!-- Settings gear -->
     <button class="gearBtn" id="gearBtn" aria-label="Open settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     </button>
 
-    <!-- Header -->
     <div class="header">
       <div>
         <div class="eyebrow">Posting Streak</div>
@@ -490,7 +331,6 @@
       </div>
     </div>
 
-    <!-- Hero streak number — the signature focal point -->
     <div class="heroStreak">
       <span class="heroNumber" id="currentStreakVal">0</span>
       <span class="heroUnit" id="currentStreakUnit">days</span>
@@ -499,14 +339,28 @@
 
     <div class="encourage" id="encourageNote"></div>
 
-    <!-- Chain heatmap -->
-    <div class="chainWrap">
-      <div class="chainDayLabels" id="chainDayLabels"></div>
-      <div class="chainGrid" id="chainGrid"></div>
+    <div class="viewToggle" id="viewToggle">
+      <button type="button" class="active" data-view="weeks">Recent</button>
+      <button type="button" data-view="month">Month</button>
+    </div>
+
+    <div class="calWrap">
+      <div class="monthNav" id="monthNav">
+        <button type="button" class="monthNavBtn" id="prevMonthBtn" aria-label="Previous month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="calMonthLabel show" id="calMonthLabel"></div>
+        <button type="button" class="monthNavBtn" id="nextMonthBtn" aria-label="Next month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="calDayLabels" id="calDayLabels"></div>
+      <div class="calGrid" id="calGrid"></div>
       <div class="legend" id="legendRow"></div>
     </div>
 
-    <!-- Post button + platform picker -->
+    <div class="monthSummary" id="monthSummary"></div>
+
     <button class="postBtn" id="postBtn">I posted today</button>
     <div class="editingDateLabel" id="editingDateLabel"></div>
     <div class="platformPicker" id="platformPicker"></div>
@@ -517,15 +371,11 @@
 
     <div class="footer">Swiftry</div>
 
-    <!-- Settings panel -->
     <div class="settingsPanel" id="settingsPanel" role="dialog" aria-label="Widget settings">
       <div class="settingsHead">
         <h2>Settings</h2>
         <button class="closeBtn" id="closeSettingsBtn" aria-label="Close settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12"/>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
 
@@ -562,7 +412,7 @@
       <div class="settingsSection">
         <div class="sectionLabel">Calendar</div>
         <div class="field">
-          <label>Weeks shown</label>
+          <label>Weeks shown (Recent view)</label>
           <div class="segGroup" id="weeksGroup">
             <button data-weeks="4">4 weeks</button>
             <button data-weeks="5">5 weeks</button>
@@ -593,14 +443,28 @@
   <script>
     /* =====================================================================
        Content Streak — Swiftry
-       A configurable posting heatmap for content creators, styled as a
-       warm "studio" identity: the current streak reads as an unbroken
-       chain of linked days rather than a flat grid of colored squares.
 
-       Configurable via URL query params (appearance only — platform/
-       calendar setup is configured through the in-widget gear icon):
-         ?theme=dark        → dark ("Studio") | light ("Paper") | sunset ("Ember")
-         &accent=%23ff8a3d  → hex color, URL-encoded # as %23
+       Two calendar views:
+       - "Recent": a compact rolling N-week heatmap ending on today (the
+         original view).
+       - "Month": a full calendar-month grid with prev/next navigation and
+         a per-platform post-count summary for the month being viewed.
+
+       Both views render the same underlying data and share click behavior:
+       clicking ANY cell (past, today, or future) opens the platform
+       picker for that date. Past/today entries count toward the streak
+       immediately; future entries are shown as "planned" (dashed outline,
+       no fill) and only count once their date arrives.
+
+       Data model:
+         postData.days  = { "YYYY-MM-DD": ["p1","p2",...] }   — which platform slots were posted on that day
+         postData.notes = { "YYYY-MM-DD": { "p1": { note }, "p4": { label, note } } }
+
+       Configurable via URL query params (appearance only):
+         ?theme=dark | light | sunset
+         &accent=%23ff8a3d
+       Platform names/colors, calendar window size, and week-start day are
+       configured through the in-widget gear icon.
        ===================================================================== */
     (function () {
       const SETTINGS_KEY = "swiftry-streak-settings";
@@ -623,6 +487,7 @@
         }
       };
 
+      // ---------- settings ----------
       const params = new URLSearchParams(window.location.search);
       const urlTheme = (params.get("theme") || "").toLowerCase();
       const urlAccent = params.get("accent") || "";
@@ -654,28 +519,12 @@
         catch (_) { /* ignore */ }
       };
 
-      // notes: { "YYYY-MM-DD": { "p1": { note: "..." }, "p4": { label: "Facebook", note: "..." } } }
-      // "label" only applies to the "Other" slot (p4) — a per-day display
-      // name distinct from the slot's permanent settings name. "note" is
-      // available on every platform: a free-text description of that
-      // day's post on that specific platform.
+      // ---------- post data ----------
       let postData = { days: {}, notes: {} };
-      let migratedFromOldFormat = false;
       try {
         const raw = JSON.parse(localStorage.getItem(DATA_KEY) || "null");
         if (raw && typeof raw.days === "object") {
-          let notes = (raw.notes && typeof raw.notes === "object") ? raw.notes : {};
-          // Migrate the older single-field "otherLabels" format
-          // ({ "YYYY-MM-DD": "Facebook" }) into the new per-platform shape.
-          if (raw.otherLabels && typeof raw.otherLabels === "object") {
-            Object.keys(raw.otherLabels).forEach(date => {
-              notes[date] = notes[date] || {};
-              notes[date].p4 = notes[date].p4 || {};
-              if (!notes[date].p4.label) notes[date].p4.label = raw.otherLabels[date];
-            });
-            migratedFromOldFormat = true;
-          }
-          postData = { days: raw.days, notes };
+          postData = { days: raw.days, notes: (raw.notes && typeof raw.notes === "object") ? raw.notes : {} };
         }
       } catch (_) { /* ignore */ }
 
@@ -684,23 +533,26 @@
         catch (_) { /* ignore */ }
       };
 
-      // Write the migrated shape back immediately, so the old
-      // "otherLabels" field doesn't linger in storage untouched until the
-      // next time the person happens to log a post.
-      if (migratedFromOldFormat) persistPostData();
-
-      const dayKey = (d) =>
-        d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      // ---------- date helpers ----------
+      const dayKey = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
       const startOfDay = (d) => { const c = new Date(d); c.setHours(0, 0, 0, 0); return c; };
       const todayKey = () => dayKey(startOfDay(new Date()));
+      const parseKey = (key) => new Date(key + "T00:00:00");
 
+      // ---------- DOM refs ----------
       const $currentStreakVal  = document.getElementById("currentStreakVal");
       const $currentStreakUnit = document.getElementById("currentStreakUnit");
       const $bestStreakVal     = document.getElementById("bestStreakVal");
       const $encourageNote     = document.getElementById("encourageNote");
-      const $chainGrid         = document.getElementById("chainGrid");
-      const $chainDayLabels    = document.getElementById("chainDayLabels");
+      const $viewToggle        = document.getElementById("viewToggle");
+      const $monthNav          = document.getElementById("monthNav");
+      const $prevMonthBtn      = document.getElementById("prevMonthBtn");
+      const $nextMonthBtn      = document.getElementById("nextMonthBtn");
+      const $calMonthLabel     = document.getElementById("calMonthLabel");
+      const $calDayLabels      = document.getElementById("calDayLabels");
+      const $calGrid           = document.getElementById("calGrid");
       const $legendRow         = document.getElementById("legendRow");
+      const $monthSummary      = document.getElementById("monthSummary");
       const $postBtn           = document.getElementById("postBtn");
       const $editingDateLabel  = document.getElementById("editingDateLabel");
       const $platformPicker    = document.getElementById("platformPicker");
@@ -721,24 +573,32 @@
       const $saveSettings   = document.getElementById("saveSettingsBtn");
       const $resetDataBtn   = document.getElementById("resetDataBtn");
 
+      let currentView = "weeks"; // "weeks" | "month"
+      let monthCursor = startOfDay(new Date()); // which month is shown in month-view (always normalized to the 1st conceptually via getMonth/getFullYear)
       let pendingPlatforms = new Set();
-      let selectedDateKey = null; // the date currently being edited in the picker — set when any cell or the main button is clicked
+      let pendingExtras = {};
+      let selectedDateKey = null;
 
+      // ---------- theme/accent ----------
       const applyTheme = (theme) => {
         VALID_THEMES.forEach(t => document.body.classList.remove("theme-" + t));
         document.body.classList.add("theme-" + theme);
       };
-      const setAccent = (hex) => {
-        document.documentElement.style.setProperty("--accent", hex);
+      const setAccent = (hex) => document.documentElement.style.setProperty("--accent", hex);
+
+      const escapeHtml = (str) => {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
       };
 
+      // ---------- streak logic ----------
       const hasPostOn = (key) => Array.isArray(postData.days[key]) && postData.days[key].length > 0;
 
       const computeCurrentStreak = () => {
         let count = 0;
         let cursor = startOfDay(new Date());
-        const todayHasPost = hasPostOn(dayKey(cursor));
-        if (!todayHasPost) cursor.setDate(cursor.getDate() - 1);
+        if (!hasPostOn(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
         while (hasPostOn(dayKey(cursor))) {
           count++;
           cursor.setDate(cursor.getDate() - 1);
@@ -748,31 +608,23 @@
 
       const computeBestStreak = () => {
         const today = startOfDay(new Date());
-        // Exclude future-dated entries (planned-ahead posts) from the best-streak
-        // scan — a future day shouldn't inflate a historical record until it
-        // actually arrives, even though it's already filled in for planning.
         const keys = Object.keys(postData.days)
-          .filter(k => hasPostOn(k) && startOfDay(new Date(k)) <= today)
+          .filter(k => hasPostOn(k) && startOfDay(parseKey(k)) <= today)
           .sort();
         if (keys.length === 0) return 0;
         let best = 1, run = 1;
         for (let i = 1; i < keys.length; i++) {
-          const prev = new Date(keys[i - 1]);
-          const curr = new Date(keys[i]);
-          const diffDays = Math.round((curr - prev) / (24 * 60 * 60 * 1000));
+          const diffDays = Math.round((parseKey(keys[i]) - parseKey(keys[i - 1])) / 86400000);
           run = (diffDays === 1) ? run + 1 : 1;
           best = Math.max(best, run);
         }
         return Math.max(best, computeCurrentStreak());
       };
 
-      // Returns the set of date keys that belong to the CURRENT active
-      // streak run — used to mark "linked" chain cells in the heatmap.
       const currentStreakDateKeys = () => {
         const keys = new Set();
         let cursor = startOfDay(new Date());
-        const todayHasPost = hasPostOn(dayKey(cursor));
-        if (!todayHasPost) cursor.setDate(cursor.getDate() - 1);
+        if (!hasPostOn(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
         while (hasPostOn(dayKey(cursor))) {
           keys.add(dayKey(cursor));
           cursor.setDate(cursor.getDate() - 1);
@@ -781,24 +633,76 @@
       };
 
       const encouragementFor = (streak) => {
-        if (streak === 0) return "Every chain starts with one link. Whenever you're ready.";
-        if (streak < 3) return `<span class="spark">${streak} days linked.</span> Keep the chain going.`;
-        if (streak < 7) return `<span class="spark">${streak} days unbroken!</span> You're building a real habit.`;
+        if (streak === 0) return "Every streak starts with one post. Whenever you're ready.";
+        if (streak < 3) return `<span class="spark">${streak} days.</span> Keep the momentum going.`;
+        if (streak < 7) return `<span class="spark">${streak} days in a row!</span> You're building a real habit.`;
         if (streak < 30) return `<span class="spark">${streak} days strong.</span> This is what consistency looks like.`;
         return `<span class="spark">${streak} days!</span> That's a serious creative habit.`;
       };
 
-      const renderDayLabels = () => {
-        const baseLabels = settings.weekStart === "monday"
-          ? ["M", "T", "W", "T", "F", "S", "S"]
-          : ["S", "M", "T", "W", "T", "F", "S"];
-        $chainDayLabels.innerHTML = baseLabels.map(l => `<span>${l}</span>`).join("");
+      // ---------- tooltip text for a given day ----------
+      const tooltipFor = (key, platformSlots, isFuture) => {
+        const dayNotes = postData.notes[key] || {};
+        const parts = platformSlots.map(slot => {
+          const slotNote = dayNotes[slot] || {};
+          const displayName = (slot === "p4" && slotNote.label) ? slotNote.label : (settings.platforms[slot]?.name || slot);
+          return slotNote.note ? `${displayName}: ${slotNote.note}` : displayName;
+        });
+        const suffix = parts.length ? " — " + parts.join(" · ") + (isFuture ? " (planned)" : "") : "";
+        return key + suffix;
       };
 
-      const escapeHtml = (str) => {
-        const div = document.createElement("div");
-        div.textContent = str;
-        return div.innerHTML;
+      // ---------- build one calendar cell (shared by both views) ----------
+      const buildCell = (d, { outsideMonth = false } = {}) => {
+        const today = startOfDay(new Date());
+        const key = dayKey(d);
+        const isToday = key === todayKey();
+        const isFuture = startOfDay(d) > today;
+        const platformSlots = Array.isArray(postData.days[key]) ? postData.days[key] : [];
+        const hasEntry = platformSlots.length > 0;
+        const linkedKeys = currentStreakDateKeys();
+
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "calCell";
+        cell.dataset.date = key;
+        cell.title = tooltipFor(key, platformSlots, isFuture);
+
+        if (outsideMonth) cell.classList.add("outsideMonth");
+        if (isToday) cell.classList.add("today");
+        if (linkedKeys.has(key)) cell.classList.add("linked");
+        if (hasEntry) cell.classList.add("hasPost");
+
+        if (isFuture) {
+          cell.classList.add("future");
+          if (hasEntry) {
+            cell.classList.add("planned");
+            cell.style.setProperty("--planned-color", settings.platforms[platformSlots[0]]?.color || "#6b7280");
+          }
+        } else if (platformSlots.length === 1) {
+          cell.style.background = settings.platforms[platformSlots[0]]?.color || "#6b7280";
+        } else if (platformSlots.length > 1) {
+          cell.classList.add("multi");
+          const colors = platformSlots.slice(0, 3).map(slot => settings.platforms[slot]?.color || "#6b7280");
+          while (colors.length < 3) colors.push(colors[colors.length - 1]);
+          cell.style.setProperty("--seg1", colors[0]);
+          cell.style.setProperty("--seg2", colors[1]);
+          cell.style.setProperty("--seg3", colors[2]);
+        } else if (!hasEntry) {
+          cell.classList.add("empty");
+        }
+
+        const num = document.createElement("span");
+        num.className = "calCellNum";
+        num.textContent = d.getDate();
+        cell.appendChild(num);
+
+        return cell;
+      };
+
+      const renderDayLabels = () => {
+        const baseLabels = settings.weekStart === "monday" ? ["M","T","W","T","F","S","S"] : ["S","M","T","W","T","F","S"];
+        $calDayLabels.innerHTML = baseLabels.map(l => `<span>${l}</span>`).join("");
       };
 
       const renderLegend = () => {
@@ -808,11 +712,13 @@
         }).join("");
       };
 
-      const renderHeatmap = () => {
-        $chainGrid.innerHTML = "";
-        const today = startOfDay(new Date());
-        const linkedKeys = currentStreakDateKeys();
+      // ---------- "Recent" view: rolling N-week window ending today ----------
+      const renderWeeksView = () => {
+        $calGrid.innerHTML = "";
+        $calMonthLabel.classList.remove("show");
+        $monthNav.classList.remove("show");
 
+        const today = startOfDay(new Date());
         const weekStartOffset = settings.weekStart === "monday" ? 1 : 0;
         const todayCol = (today.getDay() - weekStartOffset + 7) % 7;
         const totalCells = settings.weeks * 7;
@@ -826,57 +732,121 @@
         for (let i = 0; i < totalCells; i++) {
           const d = new Date(gridStart);
           d.setDate(d.getDate() + i);
-          const key = dayKey(d);
-          const isToday = key === todayKey();
-          const isFuture = startOfDay(d) > today;
-          const platformSlots = Array.isArray(postData.days[key]) ? postData.days[key] : [];
-          const hasEntry = platformSlots.length > 0;
-
-          const cell = document.createElement("button");
-          cell.type = "button";
-          cell.className = "chainCell";
-          cell.dataset.date = key;
-
-          const dayNotes = postData.notes[key] || {};
-          const parts = platformSlots.map(slot => {
-            const slotNote = dayNotes[slot] || {};
-            const displayName = (slot === "p4" && slotNote.label) ? slotNote.label : (settings.platforms[slot]?.name || slot);
-            return slotNote.note ? `${displayName}: ${slotNote.note}` : displayName;
-          });
-          const suffix = parts.length ? " — " + parts.join(" · ") + (isFuture ? " (planned)" : "") : "";
-          cell.title = key + suffix;
-
-          if (isToday) cell.classList.add("today");
-          if (linkedKeys.has(key)) cell.classList.add("linked");
-
-          if (isFuture) {
-            cell.classList.add("future");
-            if (hasEntry) {
-              // Planned-ahead post: shown as a dashed outline in the
-              // platform's color rather than a solid fill, so it visually
-              // reads as "scheduled" rather than "already happened" —
-              // and it deliberately does NOT count toward the streak
-              // until the date actually arrives (handled in the streak
-              // calculation functions, not here).
-              cell.classList.add("planned");
-              const plannedColor = settings.platforms[platformSlots[0]]?.color || "#6b7280";
-              cell.style.setProperty("--planned-color", plannedColor);
-            }
-          } else if (platformSlots.length === 1) {
-            cell.style.background = settings.platforms[platformSlots[0]]?.color || "#6b7280";
-          } else if (platformSlots.length > 1) {
-            cell.classList.add("multi");
-            const colors = platformSlots.slice(0, 3).map(slot => settings.platforms[slot]?.color || "#6b7280");
-            while (colors.length < 3) colors.push(colors[colors.length - 1]);
-            cell.style.setProperty("--seg1", colors[0]);
-            cell.style.setProperty("--seg2", colors[1]);
-            cell.style.setProperty("--seg3", colors[2]);
-          }
-
-          $chainGrid.appendChild(cell);
+          $calGrid.appendChild(buildCell(d));
         }
       };
 
+      // ---------- "Month" view: full calendar month with leading/trailing
+      // days from adjacent months filled in (dimmed) so every row is a
+      // complete week, plus prev/next navigation. ----------
+      const renderMonthView = () => {
+        $calGrid.innerHTML = "";
+        $calMonthLabel.classList.add("show");
+        $monthNav.classList.add("show");
+
+        const year = monthCursor.getFullYear();
+        const month = monthCursor.getMonth();
+        $calMonthLabel.textContent = monthCursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+        const weekStartOffset = settings.weekStart === "monday" ? 1 : 0;
+        const firstOfMonth = new Date(year, month, 1);
+        const firstCol = (firstOfMonth.getDay() - weekStartOffset + 7) % 7;
+        const gridStart = new Date(firstOfMonth);
+        gridStart.setDate(gridStart.getDate() - firstCol);
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const lastOfMonth = new Date(year, month, daysInMonth);
+        const lastCol = (lastOfMonth.getDay() - weekStartOffset + 7) % 7;
+        const trailingDays = 6 - lastCol;
+        const totalCells = firstCol + daysInMonth + trailingDays;
+
+        for (let i = 0; i < totalCells; i++) {
+          const d = new Date(gridStart);
+          d.setDate(d.getDate() + i);
+          const outsideMonth = d.getMonth() !== month;
+          $calGrid.appendChild(buildCell(d, { outsideMonth }));
+        }
+
+        renderMonthSummary(year, month);
+      };
+
+      // ---------- month summary: post count per platform for the viewed month ----------
+      const renderMonthSummary = (year, month) => {
+        const counts = {};
+        PLATFORM_SLOTS.forEach(slot => counts[slot] = 0);
+        let totalDaysPosted = 0;
+
+        Object.keys(postData.days).forEach(key => {
+          const d = parseKey(key);
+          if (d.getFullYear() === year && d.getMonth() === month && hasPostOn(key)) {
+            totalDaysPosted++;
+            postData.days[key].forEach(slot => { if (counts[slot] !== undefined) counts[slot]++; });
+          }
+        });
+
+        const maxCount = Math.max(1, ...Object.values(counts));
+        $monthSummary.innerHTML = PLATFORM_SLOTS.map(slot => {
+          const p = settings.platforms[slot];
+          const count = counts[slot];
+          const pct = Math.round((count / maxCount) * 100);
+          return `
+            <div class="summaryRow">
+              <span class="summaryDot" style="background:${p.color}"></span>
+              <span class="summaryName">${escapeHtml(p.name)}</span>
+              <span class="summaryBar"><span class="summaryBarFill" style="width:${pct}%;background:${p.color}"></span></span>
+              <span class="summaryCount">${count}</span>
+            </div>`;
+        }).join("") + `<div class="monthTotalLine">${totalDaysPosted} day${totalDaysPosted === 1 ? "" : "s"} posted this month</div>`;
+      };
+
+      const renderCalendar = () => {
+        renderDayLabels();
+        renderLegend();
+        if (currentView === "month") {
+          renderMonthView();
+          $monthSummary.classList.add("show");
+        } else {
+          renderWeeksView();
+          $monthSummary.classList.remove("show");
+        }
+      };
+
+      // ---------- main render ----------
+      const render = () => {
+        const current = computeCurrentStreak();
+        const best = computeBestStreak();
+        $currentStreakVal.textContent = current;
+        $currentStreakUnit.textContent = current === 1 ? "day" : "days";
+        $bestStreakVal.textContent = best + (best === 1 ? " day" : " days");
+        $encourageNote.innerHTML = encouragementFor(current);
+        renderCalendar();
+        renderPlatformPicker();
+
+        const postedToday = hasPostOn(todayKey());
+        $postBtn.textContent = postedToday ? "Posted today ✓ (tap to edit)" : "I posted today";
+        $postBtn.classList.toggle("already", postedToday);
+      };
+
+      // ---------- view toggle ----------
+      $viewToggle.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-view]");
+        if (!btn) return;
+        currentView = btn.dataset.view;
+        Array.from($viewToggle.children).forEach(b => b.classList.toggle("active", b === btn));
+        if (currentView === "month") monthCursor = startOfDay(new Date()); // reset to current month on switch
+        renderCalendar();
+      });
+
+      $prevMonthBtn.addEventListener("click", () => {
+        monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1);
+        renderCalendar();
+      });
+      $nextMonthBtn.addEventListener("click", () => {
+        monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1);
+        renderCalendar();
+      });
+
+      // ---------- platform picker ----------
       const renderPlatformPicker = () => {
         $platformPicker.innerHTML = PLATFORM_SLOTS.map(slot => {
           const p = settings.platforms[slot];
@@ -889,36 +859,10 @@
               <button type="button" class="platformChip" data-slot="${slot}" style="--chip-color:${p.color}">
                 <span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}
               </button>
-              <div class="platformExtra" data-slot="${slot}">
-                ${extraFieldsHtml}
-              </div>
+              <div class="platformExtra" data-slot="${slot}">${extraFieldsHtml}</div>
             </div>`;
         }).join("");
       };
-
-      const render = () => {
-        const current = computeCurrentStreak();
-        const best = computeBestStreak();
-        $currentStreakVal.textContent = current;
-        $currentStreakUnit.textContent = current === 1 ? "day" : "days";
-        $bestStreakVal.textContent = best + (best === 1 ? " day" : " days");
-        $encourageNote.innerHTML = encouragementFor(current);
-        renderDayLabels();
-        renderLegend();
-        renderPlatformPicker();
-        renderHeatmap();
-
-        const postedToday = hasPostOn(todayKey());
-        $postBtn.textContent = postedToday ? "Posted today ✓ (tap to edit)" : "I posted today";
-        $postBtn.classList.toggle("already", postedToday);
-      };
-
-      // Pending per-platform label/note text while the picker is open,
-      // keyed by slot. Populated from existing data on open, and read
-      // back out (rather than re-querying possibly-stale DOM nodes) when
-      // the user confirms — this avoids relying on input elements that
-      // might get rebuilt mid-edit.
-      let pendingExtras = {}; // { p1: { note: "..." }, p4: { label: "...", note: "..." } }
 
       const syncExtraVisibility = () => {
         $platformPicker.querySelectorAll(".platformExtra").forEach(extra => {
@@ -926,14 +870,8 @@
         });
       };
 
-      const formatDateForLabel = (key) => {
-        const d = new Date(key + "T00:00:00");
-        return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-      };
+      const formatDateForLabel = (key) => parseKey(key).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
-      // Opens the picker for an arbitrary date (today, past, or future).
-      // Used both by the main "I posted today" button (key = today) and by
-      // clicking any cell directly in the heatmap.
       const openPickerFor = (key) => {
         selectedDateKey = key;
         pendingPlatforms = new Set(postData.days[key] || []);
@@ -941,7 +879,6 @@
 
         $platformPicker.querySelectorAll(".platformChip").forEach(chip =>
           chip.classList.toggle("active", pendingPlatforms.has(chip.dataset.slot)));
-
         $platformPicker.querySelectorAll(".otherLabelField").forEach(input => {
           input.value = (pendingExtras[input.dataset.slot] && pendingExtras[input.dataset.slot].label) || "";
         });
@@ -949,7 +886,7 @@
           textarea.value = (pendingExtras[textarea.dataset.slot] && pendingExtras[textarea.dataset.slot].note) || "";
         });
 
-        const isFutureDate = startOfDay(new Date(key + "T00:00:00")) > startOfDay(new Date());
+        const isFutureDate = startOfDay(parseKey(key)) > startOfDay(new Date());
         $editingDateLabel.innerHTML = key === todayKey()
           ? "Editing today"
           : `Editing ${formatDateForLabel(key)}${isFutureDate ? ' <span class="planned-tag">· planned</span>' : ""}`;
@@ -971,19 +908,13 @@
         else openPickerFor(todayKey());
       });
 
-      // Any cell in the heatmap — past, today, or future — opens the same
-      // picker for that specific date, enabling both retroactive logging
-      // and ahead-of-time planning.
-      $chainGrid.addEventListener("click", (e) => {
-        const cell = e.target.closest(".chainCell");
+      $calGrid.addEventListener("click", (e) => {
+        const cell = e.target.closest(".calCell");
         if (!cell) return;
         const key = cell.dataset.date;
         if (!key) return;
-        if ($platformPicker.classList.contains("open") && selectedDateKey === key) {
-          closePicker();
-        } else {
-          openPickerFor(key);
-        }
+        if ($platformPicker.classList.contains("open") && selectedDateKey === key) closePicker();
+        else openPickerFor(key);
       });
 
       $platformPicker.addEventListener("click", (e) => {
@@ -996,39 +927,25 @@
         syncExtraVisibility();
       });
 
-      // Keep pendingExtras in sync as the person types, so values survive
-      // even if something else triggers a re-render before "Log it".
       $platformPicker.addEventListener("input", (e) => {
         const slot = e.target.dataset.slot;
         if (!slot) return;
         pendingExtras[slot] = pendingExtras[slot] || {};
-        if (e.target.classList.contains("otherLabelField")) {
-          pendingExtras[slot].label = e.target.value.slice(0, 24);
-        } else if (e.target.classList.contains("noteField")) {
-          pendingExtras[slot].note = e.target.value.slice(0, 160);
-        }
+        if (e.target.classList.contains("otherLabelField")) pendingExtras[slot].label = e.target.value.slice(0, 24);
+        else if (e.target.classList.contains("noteField")) pendingExtras[slot].note = e.target.value.slice(0, 160);
       });
 
       $confirmPostBtn.addEventListener("click", () => {
         const key = selectedDateKey;
-        if (!key) return; // picker wasn't actually open on a date — nothing to save
-        // Only fall back to "Other" as a default when the day has no
-        // existing entry at all (first-time log with nothing picked).
-        // If the user is editing an existing day and explicitly clears
-        // every chip, respect that and remove the day's entry entirely.
+        if (!key) return;
         const hadExistingEntry = Array.isArray(postData.days[key]);
         if (pendingPlatforms.size === 0) {
-          if (hadExistingEntry) {
-            delete postData.days[key];
-          } else {
-            postData.days[key] = ["p4"];
-          }
+          if (hadExistingEntry) delete postData.days[key];
+          else postData.days[key] = ["p4"];
         } else {
           postData.days[key] = Array.from(pendingPlatforms);
         }
 
-        // Persist label/note only for platforms still selected; drop any
-        // leftover extras for platforms the user unchecked.
         const cleanedNotes = {};
         pendingPlatforms.forEach(slot => {
           const extra = pendingExtras[slot] || {};
@@ -1037,11 +954,8 @@
           if (extra.note && extra.note.trim()) entry.note = extra.note.trim();
           if (Object.keys(entry).length > 0) cleanedNotes[slot] = entry;
         });
-        if (Object.keys(cleanedNotes).length > 0) {
-          postData.notes[key] = cleanedNotes;
-        } else {
-          delete postData.notes[key];
-        }
+        if (Object.keys(cleanedNotes).length > 0) postData.notes[key] = cleanedNotes;
+        else delete postData.notes[key];
 
         persistPostData();
         closePicker();
@@ -1050,39 +964,31 @@
 
       $cancelPostBtn.addEventListener("click", closePicker);
 
+      // ---------- settings panel ----------
       let draft = JSON.parse(JSON.stringify(settings));
 
       const renderPlatformFields = () => {
         $platformFields.innerHTML = PLATFORM_SLOTS.map(slot => {
           const p = draft.platforms[slot];
-          return `<div class="platformRow">
+          return `<div class="platformRowSetting">
                     <input type="color" data-slot="${slot}" class="platformColorInput" value="${p.color}" />
                     <input type="text" data-slot="${slot}" class="platformNameInput" value="${escapeHtml(p.name)}" maxlength="20" />
                   </div>`;
         }).join("");
-
         $platformFields.querySelectorAll(".platformColorInput").forEach(input => {
-          input.addEventListener("input", () => {
-            draft.platforms[input.dataset.slot].color = input.value;
-          });
+          input.addEventListener("input", () => { draft.platforms[input.dataset.slot].color = input.value; });
         });
         $platformFields.querySelectorAll(".platformNameInput").forEach(input => {
-          input.addEventListener("input", () => {
-            draft.platforms[input.dataset.slot].name = input.value.slice(0, 20);
-          });
+          input.addEventListener("input", () => { draft.platforms[input.dataset.slot].name = input.value.slice(0, 20); });
         });
       };
 
       const syncPanelUI = () => {
-        Array.from($themeGroup.children).forEach(btn =>
-          btn.classList.toggle("active", btn.dataset.theme === draft.theme));
+        Array.from($themeGroup.children).forEach(btn => btn.classList.toggle("active", btn.dataset.theme === draft.theme));
         $accentInput.value = draft.accent;
-        Array.from($swatchGroup.children).forEach(sw =>
-          sw.classList.toggle("active", sw.dataset.color.toLowerCase() === draft.accent.toLowerCase()));
-        Array.from($weeksGroup.children).forEach(btn =>
-          btn.classList.toggle("active", Number(btn.dataset.weeks) === draft.weeks));
-        Array.from($weekStartGroup.children).forEach(btn =>
-          btn.classList.toggle("active", btn.dataset.weekstart === draft.weekStart));
+        Array.from($swatchGroup.children).forEach(sw => sw.classList.toggle("active", sw.dataset.color.toLowerCase() === draft.accent.toLowerCase()));
+        Array.from($weeksGroup.children).forEach(btn => btn.classList.toggle("active", Number(btn.dataset.weeks) === draft.weeks));
+        Array.from($weekStartGroup.children).forEach(btn => btn.classList.toggle("active", btn.dataset.weekstart === draft.weekStart));
         renderPlatformFields();
       };
 
@@ -1110,7 +1016,6 @@
         syncPanelUI();
         applyTheme(draft.theme);
       });
-
       $accentInput.addEventListener("input", () => {
         draft.accent = $accentInput.value;
         syncPanelUI();
@@ -1123,43 +1028,34 @@
         syncPanelUI();
         setAccent(draft.accent);
       });
-
       $weeksGroup.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-weeks]");
         if (!btn) return;
         draft.weeks = Number(btn.dataset.weeks);
         syncPanelUI();
       });
-
       $weekStartGroup.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-weekstart]");
         if (!btn) return;
         draft.weekStart = btn.dataset.weekstart;
         syncPanelUI();
       });
-
       $resetDefaults.addEventListener("click", () => {
         draft = JSON.parse(JSON.stringify(DEFAULTS));
         syncPanelUI();
         applyTheme(draft.theme);
         setAccent(draft.accent);
       });
-
       $saveSettings.addEventListener("click", () => {
         PLATFORM_SLOTS.forEach(slot => {
-          if (!draft.platforms[slot].name || !draft.platforms[slot].name.trim()) {
-            draft.platforms[slot].name = DEFAULTS.platforms[slot].name;
-          }
-          if (!HEX_RE.test(draft.platforms[slot].color)) {
-            draft.platforms[slot].color = DEFAULTS.platforms[slot].color;
-          }
+          if (!draft.platforms[slot].name || !draft.platforms[slot].name.trim()) draft.platforms[slot].name = DEFAULTS.platforms[slot].name;
+          if (!HEX_RE.test(draft.platforms[slot].color)) draft.platforms[slot].color = DEFAULTS.platforms[slot].color;
         });
         settings = JSON.parse(JSON.stringify(draft));
         persistSettings();
         closeSettingsPanel();
         render();
       });
-
       $resetDataBtn.addEventListener("click", () => {
         postData = { days: {}, notes: {} };
         persistPostData();
@@ -1174,6 +1070,7 @@
         closeSettingsPanel();
       });
 
+      // ---------- boot ----------
       applyTheme(settings.theme);
       setAccent(settings.accent);
       render();
