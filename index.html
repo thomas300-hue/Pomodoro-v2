@@ -1,997 +1,652 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Pomodoro — Swiftry</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zouk Vibes Widget</title>
   <style>
-    /* ---------- Reset & base ---------- */
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; }
+    :root {
+      --bg-1: #251025;
+      --bg-2: #8f2d56;
+      --bg-3: #f77f3f;
+      --sun: #ffd166;
+      --coral: #ff6b6b;
+      --sand: #ffe8c2;
+      --aqua: #55f3d2;
+      --text: #fff8ef;
+      --muted: rgba(255, 248, 239, 0.74);
+      --glass: rgba(255, 248, 239, 0.13);
+      --glass-2: rgba(255, 248, 239, 0.075);
+      --line: rgba(255, 248, 239, 0.20);
+      --shadow: rgba(58, 12, 34, 0.38);
+      --button: #fff6e8;
+      --button-text: #2a1024;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Avenir Next", Avenir, "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      background: transparent;
+    }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                   "Helvetica Neue", Arial, sans-serif;
-      background: var(--bg, #f5f5f7);
-      color: var(--fg, #111827);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      overflow: hidden;
-      transition: background .2s ease, color .2s ease;
+      padding: 14px;
+      color: var(--text);
     }
 
-    .card {
+    .widget {
       position: relative;
       width: 100%;
-      max-width: 280px;
-      background: var(--card-bg, #ffffff);
-      border-radius: 18px;
-      padding: 18px 16px 14px;
-      box-shadow:
-        0 1px 0 rgba(0,0,0,0.02),
-        0 8px 24px rgba(0,0,0,0.06);
-      transition: background .2s ease;
-    }
-
-    /* ---------- Tabs ---------- */
-    .tabs {
-      display: flex;
-      gap: 6px;
-      justify-content: space-between;
-      margin-bottom: 14px;
-      margin-right: 26px; /* reserve room so tabs never sit under the gear icon */
-      padding: 2px;
-    }
-    .tab {
-      flex: 1;
-      appearance: none;
-      background: transparent;
-      border: 0;
-      padding: 8px 4px;
-      font: inherit;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--tab-fg, #6b7280);
-      cursor: pointer;
-      border-radius: 10px;
-      position: relative;
-      transition: color .15s ease, background .15s ease;
-    }
-    .tab:hover { color: var(--tab-fg-hover, #374151); }
-    .tab[aria-selected="true"] {
-      color: var(--fg, #111827);
-      font-weight: 600;
-    }
-    .tab[aria-selected="true"]::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: 2px;
-      transform: translateX(-50%);
-      width: 5px;
-      height: 5px;
-      border-radius: 999px;
-      background: var(--accent, #06b6d4);
-    }
-
-    /* ---------- Timer ring ---------- */
-    .ring {
-      position: relative;
-      width: 180px;
-      height: 180px;
-      margin: 6px auto 10px;
-      border-radius: 50%;
+      min-height: 292px;
+      padding: 22px;
+      overflow: hidden;
+      isolation: isolate;
+      border-radius: 32px;
       background:
-        radial-gradient(circle at center, var(--card-bg, #ffffff) 0 58%, transparent 59%),
-        conic-gradient(var(--ring-track, #e5e7eb) 0deg, var(--ring-track, #e5e7eb) 360deg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: filter .2s ease;
+        radial-gradient(circle at 78% 18%, rgba(255, 209, 102, 0.55), transparent 19%),
+        radial-gradient(circle at 14% 12%, rgba(255, 107, 107, 0.32), transparent 25%),
+        linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
+      border: 1px solid var(--line);
+      box-shadow: 0 24px 70px var(--shadow);
     }
-    .ring::before {
+
+    .widget::before {
       content: "";
       position: absolute;
       inset: 0;
-      border-radius: 50%;
-      background: conic-gradient(var(--accent) calc(var(--p,0) * 360deg), transparent 0);
-      -webkit-mask: radial-gradient(circle, transparent 0 58%, #000 59%);
-              mask: radial-gradient(circle, transparent 0 58%, #000 59%);
-    }
-    .ring.running { filter: drop-shadow(0 0 0.5px rgba(0,0,0,0.04)); }
-
-    .display {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      line-height: 1;
-    }
-    .time {
-      font-variant-numeric: tabular-nums;
-      font-feature-settings: "tnum";
-      font-size: 44px;
-      font-weight: 600;
-      letter-spacing: -0.5px;
-      color: var(--fg, #111827);
-    }
-    .mode {
-      margin-top: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--mode-fg, #4b5563);
-    }
-    .mode .dot {
-      width: 8px; height: 8px;
-      border-radius: 999px;
-      background: var(--accent, #06b6d4);
+      z-index: -3;
+      background:
+        linear-gradient(120deg, transparent 0 36%, rgba(255,255,255,0.10) 37%, transparent 42%),
+        repeating-linear-gradient(90deg, rgba(255, 232, 194, 0.06) 0 1px, transparent 1px 32px),
+        repeating-linear-gradient(0deg, rgba(255, 232, 194, 0.045) 0 1px, transparent 1px 32px);
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.88), transparent 90%);
     }
 
-    /* ---------- Controls ---------- */
-    .controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      margin-top: 4px;
-    }
-    .btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      background: var(--btn-bg, #ffffff);
-      border: 1px solid var(--btn-border, #e5e7eb);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .15s ease, border-color .15s ease, transform .05s ease;
-      color: var(--fg, #111827);
-    }
-    .btn:hover  { background: var(--btn-bg-hover, #f9fafb); border-color: var(--btn-border-hover, #d1d5db); }
-    .btn:active { transform: scale(0.96); }
-    .btn svg    { width: 16px; height: 16px; display: block; }
-
-    /* ---------- Footer ---------- */
-    .footer {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 10.5px;
-      color: var(--footer-fg, #9ca3af);
-    }
-    .footer a {
-      color: inherit;
-      text-decoration: none;
-    }
-    .footer a:hover { text-decoration: underline; }
-
-    @media (max-width: 240px) {
-      .ring   { width: 150px; height: 150px; }
-      .time   { font-size: 36px; }
-    }
-
-    @keyframes alarm-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.00); }
-      50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0.22); }
-    }
-    .ring.ringing {
-      animation: alarm-pulse 1.1s ease-in-out infinite;
-    }
-    .ring.ringing .mode .dot {
-      background: #ef4444 !important;
-      animation: alarm-pulse 1.1s ease-in-out infinite;
-    }
-
-    /* ---------- Settings gear button ---------- */
-    .gearBtn {
+    .art {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--tab-fg, #9ca3af);
-      opacity: 0.7;
-      transition: opacity .15s ease, background .15s ease, transform .2s ease;
+      right: -16px;
+      top: -10px;
+      width: min(48%, 255px);
+      height: auto;
+      z-index: -1;
+      opacity: 0.96;
+      filter: drop-shadow(0 20px 28px rgba(61, 12, 39, 0.28));
+      animation: artFloat 9s ease-in-out infinite;
+    }
+
+    @keyframes artFloat {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+      50% { transform: translate3d(-8px, 8px, 0) rotate(-1.5deg); }
+    }
+
+    .wave-glow {
+      position: absolute;
+      left: -40px;
+      right: -40px;
+      bottom: -32px;
+      height: 118px;
+      z-index: -2;
+      opacity: 0.9;
+      background:
+        radial-gradient(ellipse at 50% 100%, rgba(85, 243, 210, 0.34), transparent 58%),
+        linear-gradient(to top, rgba(37, 16, 37, 0.22), transparent);
+    }
+
+    .top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      position: relative;
       z-index: 2;
     }
-    .gearBtn:hover { opacity: 1; background: var(--btn-bg-hover, #f9fafb); }
-    .gearBtn:active { transform: scale(0.92); }
-    .gearBtn svg { width: 16px; height: 16px; }
-    .gearBtn.open { transform: rotate(40deg); opacity: 1; }
 
-    /* ---------- Settings panel ---------- */
-    .settingsPanel {
-      position: absolute;
-      inset: 0;
-      background: var(--card-bg, #ffffff);
-      border-radius: 18px;
-      padding: 16px;
+    .brand {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(4px);
-      transition: opacity .16s ease, transform .16s ease, visibility .16s;
-      z-index: 3;
-      overflow-y: auto;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
     }
-    .settingsPanel.open {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
+
+    .logo {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 19px;
+      background: linear-gradient(145deg, rgba(255, 248, 239, 0.22), rgba(255, 248, 239, 0.08));
+      border: 1px solid rgba(255, 248, 239, 0.24);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 14px 30px rgba(58, 12, 34, 0.18);
+      backdrop-filter: blur(18px);
+      font-size: 23px;
     }
-    .settingsHead {
+
+    .logo::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 209, 102, 0.28);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--sun);
+      box-shadow: 0 0 20px var(--sun);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", ui-serif, serif;
+      font-weight: 700;
+      font-size: clamp(28px, 7vw, 42px);
+      line-height: 0.94;
+      letter-spacing: -0.065em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 12px 28px rgba(44, 9, 28, 0.22);
+    }
+
+    .time-card {
+      min-width: 88px;
+      padding: 10px 12px;
+      text-align: right;
+      flex: 0 0 auto;
+      border-radius: 19px;
+      background: rgba(255, 248, 239, 0.12);
+      border: 1px solid rgba(255, 248, 239, 0.20);
+      backdrop-filter: blur(18px);
+    }
+
+    .time {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: -0.05em;
+    }
+
+    .date {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .quote-card {
+      position: relative;
+      width: min(100%, 680px);
+      padding: 20px;
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(255, 248, 239, 0.17), rgba(255, 248, 239, 0.075));
+      border: 1px solid rgba(255, 248, 239, 0.20);
+      backdrop-filter: blur(20px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 16px 34px rgba(58, 12, 34, 0.12);
+      z-index: 2;
+    }
+
+    .quote-card::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      bottom: 18px;
+      width: 3px;
+      border-radius: 99px;
+      background: linear-gradient(to bottom, var(--sun), var(--coral), var(--aqua));
+      box-shadow: 0 0 20px rgba(255, 209, 102, 0.36);
+    }
+
+    .quote,
+    .subtitle { padding-left: 15px; }
+
+    .quote {
+      margin: 0;
+      max-width: 560px;
+      font-size: clamp(19px, 5vw, 28px);
+      line-height: 1.12;
+      font-family: Georgia, "Times New Roman", ui-serif, serif;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.48;
+      font-weight: 590;
+    }
+
+    .actions {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2px;
+      gap: 12px;
+      margin-top: 18px;
+      position: relative;
+      z-index: 2;
     }
-    .settingsHead h2 {
-      font-size: 13px;
-      font-weight: 600;
-      margin: 0;
-      color: var(--fg, #111827);
-    }
-    .closeBtn {
-      width: 24px;
-      height: 24px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: var(--tab-fg, #9ca3af);
+
+    .button {
+      appearance: none;
+      border: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 6px;
+      gap: 8px;
+      min-height: 45px;
+      padding: 0 17px;
+      border-radius: 999px;
+      background: var(--button);
+      color: var(--button-text);
+      text-decoration: none;
+      font-weight: 860;
+      font-size: 14px;
+      box-shadow: 0 14px 32px rgba(58, 12, 34, 0.20);
+      transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease, background 180ms ease;
+      cursor: pointer;
     }
-    .closeBtn:hover { background: var(--btn-bg-hover, #f9fafb); }
-    .closeBtn svg { width: 15px; height: 15px; }
 
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--mode-fg, #4b5563);
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 40px rgba(58, 12, 34, 0.26);
+    }
+
+    .button.secondary {
+      background: rgba(255, 248, 239, 0.11);
+      border: 1px solid rgba(255, 248, 239, 0.20);
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    .mini-status {
       display: flex;
-      justify-content: space-between;
-    }
-    .field label .val { font-weight: 400; color: var(--tab-fg, #9ca3af); }
-
-    .field input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent, #06b6d4);
-      cursor: pointer;
-    }
-
-    .segGroup {
-      display: flex;
-      gap: 4px;
-      background: var(--ring-track, #e5e7eb);
-      border-radius: 10px;
-      padding: 3px;
-    }
-    .segGroup button {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 6px 4px;
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--mode-fg, #4b5563);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background .15s ease, color .15s ease;
-    }
-    .segGroup button.active {
-      background: var(--card-bg, #ffffff);
-      color: var(--fg, #111827);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-    }
-
-    .colorRow { display: flex; align-items: center; gap: 10px; }
-    .colorRow input[type="color"] {
-      width: 32px;
-      height: 32px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      padding: 0;
-      background: none;
-    }
-    .swatches { display: flex; gap: 6px; flex: 1; }
-    .swatch {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: border-color .15s ease, transform .1s ease;
-      padding: 0;
-    }
-    .swatch:hover { transform: scale(1.08); }
-    .swatch.active { border-color: var(--fg, #111827); }
-
-    .soundRow { display: flex; align-items: center; gap: 8px; }
-    .soundRow select {
-      flex: 1;
-      font: inherit;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
       font-size: 12px;
-      padding: 7px 8px;
-      border-radius: 8px;
-      border: 1px solid var(--btn-border, #e5e7eb);
-      background: var(--btn-bg, #ffffff);
-      color: var(--fg, #111827);
-      cursor: pointer;
-    }
-    .testSoundBtn {
-      border: 1px solid var(--btn-border, #e5e7eb);
-      background: var(--btn-bg, #ffffff);
-      color: var(--fg, #111827);
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 11px;
-      font-weight: 500;
-      cursor: pointer;
+      font-weight: 760;
       white-space: nowrap;
     }
-    .testSoundBtn:hover { background: var(--btn-bg-hover, #f9fafb); }
 
-    .settingsFoot {
-      margin-top: auto;
-      display: flex;
-      gap: 8px;
-      padding-top: 4px;
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--sun);
+      box-shadow: 0 0 0 0 rgba(255, 209, 102, 0.70);
+      animation: pulse 1.9s infinite;
     }
-    .settingsFoot button {
-      flex: 1;
-      border: none;
-      border-radius: 10px;
-      padding: 9px 0;
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 209, 102, 0.65); }
+      72% { box-shadow: 0 0 0 10px rgba(255, 209, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 209, 102, 0); }
+    }
+
+
+
+    .link-panel {
+      position: relative;
+      z-index: 3;
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 20px;
+      background: rgba(255, 248, 239, 0.14);
+      border: 1px solid rgba(255, 248, 239, 0.22);
+      backdrop-filter: blur(18px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .link-panel.hidden {
+      display: none;
+    }
+
+    .link-label {
+      margin: 0 0 9px;
+      color: var(--muted);
       font-size: 12px;
-      font-weight: 600;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .link-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .link-input {
+      width: 100%;
+      min-width: 0;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 248, 239, 0.22);
+      outline: none;
+      background: rgba(37, 16, 37, 0.28);
+      color: var(--text);
+      font: 700 13px/1 "Avenir Next", Avenir, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .mini-button {
+      flex: 0 0 auto;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 248, 239, 0.22);
+      background: rgba(255, 248, 239, 0.12);
+      color: var(--text);
+      font-weight: 850;
       cursor: pointer;
     }
-    .saveBtn { background: var(--accent, #06b6d4); color: #fff; }
-    .resetDefaultsBtn {
-      background: transparent;
-      color: var(--mode-fg, #4b5563);
-      border: 1px solid var(--btn-border, #e5e7eb) !important;
-    }
-    .resetDefaultsBtn:hover { background: var(--btn-bg-hover, #f9fafb); }
 
-    /* ---------- Themes ---------- */
-    body.theme-light {
-      --bg: #f5f5f7;
-      --fg: #111827;
-      --card-bg: #ffffff;
-      --tab-fg: #6b7280;
-      --tab-fg-hover: #374151;
-      --ring-track: #e5e7eb;
-      --mode-fg: #4b5563;
-      --btn-bg: #ffffff;
-      --btn-border: #e5e7eb;
-      --btn-bg-hover: #f9fafb;
-      --btn-border-hover: #d1d5db;
-      --footer-fg: #9ca3af;
+    .compact .widget { min-height: 210px; padding: 18px; }
+    .compact .art { width: 210px; opacity: 0.56; }
+    .compact .quote-card { padding: 15px; }
+    .compact .subtitle,
+    .compact .mini-status,
+    .compact .date { display: none; }
+    .compact .actions { margin-top: 14px; }
+
+    @media (max-width: 520px) {
+      .art { width: 245px; right: -70px; opacity: 0.55; }
+      .quote-card { width: 100%; }
     }
-    body.theme-dark {
-      --bg: #0f1115;
-      --fg: #f3f4f6;
-      --card-bg: #1a1d24;
-      --tab-fg: #9ca3af;
-      --tab-fg-hover: #d1d5db;
-      --ring-track: #2a2e37;
-      --mode-fg: #9ca3af;
-      --btn-bg: #1f2330;
-      --btn-border: #2f343f;
-      --btn-bg-hover: #262b38;
-      --btn-border-hover: #3a4150;
-      --footer-fg: #6b7280;
-    }
-    body.theme-sunset {
-      --bg: #fdf1e7;
-      --fg: #4a2c1d;
-      --card-bg: #fffaf3;
-      --tab-fg: #b9805f;
-      --tab-fg-hover: #8a5a3d;
-      --ring-track: #f3ddc4;
-      --mode-fg: #a06b4a;
-      --btn-bg: #fffaf3;
-      --btn-border: #f0d9bd;
-      --btn-bg-hover: #fcefdd;
-      --btn-border-hover: #e8c7a0;
-      --footer-fg: #c4a181;
+
+    @media (max-width: 440px) {
+      body { padding: 10px; }
+      .widget { min-height: 286px; border-radius: 27px; padding: 18px; }
+      .top-row { gap: 10px; }
+      .logo { width: 44px; height: 44px; border-radius: 16px; }
+      .time-card { min-width: 78px; padding: 9px 10px; }
+      .time { font-size: 18px; }
+      .actions { align-items: stretch; flex-direction: column; }
+      .button { width: 100%; }
+      .mini-status { justify-content: center; }
     }
   </style>
 </head>
-<body class="theme-light">
-  <main class="card" role="region" aria-label="Pomodoro timer">
-    <!-- Settings gear -->
-    <button class="gearBtn" id="gearBtn" aria-label="Open settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-    </button>
+<body>
+  <main class="widget" aria-label="Zouk Vibes Notion Widget">
+    <svg class="art" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="sunGrad" x1="72" y1="34" x2="208" y2="190" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FFE8A3"/>
+          <stop offset="0.48" stop-color="#FFD166"/>
+          <stop offset="1" stop-color="#FF7A59"/>
+        </linearGradient>
+        <linearGradient id="leafGrad" x1="131" y1="55" x2="250" y2="185" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#86F7D4"/>
+          <stop offset="1" stop-color="#0EA5A4"/>
+        </linearGradient>
+        <linearGradient id="trunkGrad" x1="183" y1="126" x2="214" y2="279" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FFE8C2"/>
+          <stop offset="1" stop-color="#B4532A"/>
+        </linearGradient>
+        <filter id="blurGlow" x="0" y="0" width="320" height="320" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feGaussianBlur stdDeviation="9"/>
+        </filter>
+      </defs>
+      <circle cx="168" cy="116" r="78" fill="url(#sunGrad)" opacity="0.95"/>
+      <circle cx="168" cy="116" r="88" stroke="#FFE8C2" stroke-opacity="0.34"/>
+      <path d="M83 135C121 126 166 128 223 143" stroke="#FFF2D8" stroke-opacity="0.52" stroke-width="3" stroke-linecap="round"/>
+      <path d="M76 159C126 149 177 152 238 169" stroke="#FFF2D8" stroke-opacity="0.38" stroke-width="3" stroke-linecap="round"/>
+      <path d="M195 130C185 177 185 219 207 278" stroke="url(#trunkGrad)" stroke-width="15" stroke-linecap="round"/>
+      <path d="M196 132C172 103 131 94 88 107C132 63 176 70 198 126Z" fill="url(#leafGrad)"/>
+      <path d="M199 129C200 93 225 60 268 45C253 92 231 124 202 137Z" fill="url(#leafGrad)" opacity="0.95"/>
+      <path d="M201 134C231 103 270 96 304 113C258 122 229 137 207 151Z" fill="url(#leafGrad)" opacity="0.86"/>
+      <path d="M194 132C162 125 130 139 105 168C143 164 174 154 199 139Z" fill="#5EEAD4" opacity="0.82"/>
+      <path d="M68 252C104 235 137 236 171 252C204 267 236 266 274 247" stroke="#55F3D2" stroke-opacity="0.72" stroke-width="5" stroke-linecap="round"/>
+      <path d="M49 277C90 257 130 258 169 276C207 293 249 289 289 267" stroke="#FFE8C2" stroke-opacity="0.52" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="168" cy="116" r="96" stroke="#FFD166" stroke-opacity="0.18" filter="url(#blurGlow)"/>
+    </svg>
 
-    <!-- Tabs -->
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" data-mode="pomodoro"  aria-selected="true">Pomodoro</button>
-      <button class="tab" role="tab" data-mode="short"     aria-selected="false">Short Break</button>
-      <button class="tab" role="tab" data-mode="long"      aria-selected="false">Long Break</button>
-    </div>
+    <div class="wave-glow" aria-hidden="true"></div>
 
-    <!-- Ring + display -->
-    <div class="ring" id="ring" style="--accent:#06b6d4;">
-      <div class="display">
-        <div class="time" id="time">25:00</div>
-        <div class="mode"><span class="dot"></span><span id="modeLabel">work</span></div>
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="controls">
-      <button class="btn" id="playBtn" aria-label="Start">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/>
-        </svg>
-      </button>
-      <button class="btn" id="resetBtn" aria-label="Reset">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"/>
-          <path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="footer">
-      <a href="#" id="powered" tabindex="-1">Powered by Swiftry</a>
-    </div>
-
-    <!-- Settings panel (overlay) -->
-    <div class="settingsPanel" id="settingsPanel" role="dialog" aria-label="Widget settings">
-      <div class="settingsHead">
-        <h2>Settings</h2>
-        <button class="closeBtn" id="closeSettingsBtn" aria-label="Close settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="field">
-        <label>Work duration <span class="val" id="durationVal">25 min</span></label>
-        <input type="range" id="durationInput" min="1" max="120" step="1" value="25" />
-      </div>
-
-      <div class="field">
-        <label>Theme</label>
-        <div class="segGroup" id="themeGroup">
-          <button data-theme="light">Light</button>
-          <button data-theme="dark">Dark</button>
-          <button data-theme="sunset">Sunset</button>
+    <section class="top-row">
+      <div class="brand">
+        <div class="logo" id="emoji" aria-hidden="true">🌺</div>
+        <div>
+          <p class="eyebrow" id="eyebrow">Warm Island Signal</p>
+          <h1 id="title">Zouk Vibes</h1>
         </div>
       </div>
 
-      <div class="field">
-        <label>Accent color</label>
-        <div class="colorRow">
-          <input type="color" id="accentInput" value="#06b6d4" />
-          <div class="swatches" id="swatchGroup">
-            <button class="swatch" style="background:#06b6d4" data-color="#06b6d4" aria-label="Cyan"></button>
-            <button class="swatch" style="background:#ef4444" data-color="#ef4444" aria-label="Red"></button>
-            <button class="swatch" style="background:#22c55e" data-color="#22c55e" aria-label="Green"></button>
-            <button class="swatch" style="background:#a855f7" data-color="#a855f7" aria-label="Purple"></button>
-            <button class="swatch" style="background:#f59e0b" data-color="#f59e0b" aria-label="Amber"></button>
-          </div>
-        </div>
+      <div class="time-card" aria-label="Current time">
+        <span class="time" id="time">00:00</span>
+        <span class="date" id="date">Today</span>
       </div>
+    </section>
 
-      <div class="field">
-        <label>Sound</label>
-        <div class="soundRow">
-          <select id="soundInput">
-            <option value="chime">Chime</option>
-            <option value="bell">Bell</option>
-            <option value="alarm">Alarm</option>
-            <option value="off">Off</option>
-          </select>
-          <button class="testSoundBtn" id="testSoundBtn" type="button">Test</button>
-        </div>
-      </div>
+    <section class="quote-card">
+      <p class="quote" id="quote">Soft island focus, calm energy, timeless elegance.</p>
+      <p class="subtitle" id="subtitle">A premium Zouk-inspired widget for Notion — sunset colors, elegant island art and a customizable music link with a demo mix.</p>
+    </section>
 
-      <div class="field">
-        <label>Auto-start sessions</label>
-        <div class="segGroup" id="autostartGroup">
-          <button data-autostart="false">Off</button>
-          <button data-autostart="true">On</button>
-        </div>
-      </div>
+    <section class="actions">
+      <a class="button" id="playlistButton" href="#" data-url="https://youtu.be/2WHNhY3CLXc" target="_self" rel="noopener noreferrer">🔗 Show demo link</a>
+      <button class="button secondary" type="button" id="shuffleButton">Shuffle vibe</button>
+      <div class="mini-status"><span class="pulse"></span><span id="status">Demo link ready</span></div>
+    </section>
 
-      <div class="settingsFoot">
-        <button class="resetDefaultsBtn" id="resetDefaultsBtn" type="button">Reset</button>
-        <button class="saveBtn" id="saveSettingsBtn" type="button">Done</button>
+    <section class="link-panel hidden" id="linkPanel" aria-label="Music link panel">
+      <p class="link-label" id="linkHelp">Copy manually: select the link below, then paste it into a new browser tab.</p>
+      <div class="link-row">
+        <input class="link-input" id="linkInput" type="text" readonly value="https://youtu.be/2WHNhY3CLXc" aria-label="Music link" />
+        <button class="mini-button" type="button" id="selectLinkButton">Select</button>
+        <button class="mini-button" type="button" id="closeLinkButton">Close</button>
       </div>
-    </div>
+    </section>
   </main>
 
   <script>
-    /* =====================================================================
-       Pomodoro Widget — Swiftry
-       Two ways to configure this widget:
+    const defaultPlaylist = "https://youtu.be/2WHNhY3CLXc";
+    const params = new URLSearchParams(window.location.search);
 
-       1. URL query params (useful for sharing a pre-configured embed link):
-            ?duration=25      → work session length in minutes (default 25)
-            &theme=light       → light | dark | sunset (default light)
-            &accent=%2306b6d4  → hex color, URL-encoded # as %23 (default cyan)
-            &sound=chime       → chime | bell | alarm | off (default chime)
-            &autostart=true    → true | false — auto-start the timer on load
-
-       2. The in-widget settings panel (gear icon, top-right). Changes made
-          there are saved to localStorage and take priority over the URL on
-          every load after the first — so a user who has tweaked their
-          widget keeps their preferences even on a plain embed link.
-
-       Example pre-configured embed URL:
-         index.html?duration=45&theme=dark&accent=%23ff6b6b&sound=bell&autostart=true
-       ===================================================================== */
-    (function () {
-      const STORAGE_KEY = "swiftry-pomodoro-settings";
-      const LS_MODE_KEY  = "swiftry-pomodoro-mode";
-
-      const VALID_THEMES = ["light", "dark", "sunset"];
-      const VALID_SOUNDS = ["chime", "bell", "alarm", "off"];
-      const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-
-      const clampInt = (v, min, max, fallback) => {
-        const n = parseInt(v, 10);
-        if (Number.isNaN(n)) return fallback;
-        return Math.min(max, Math.max(min, n));
-      };
-
-      const DEFAULTS = {
-        duration: 25,
-        theme: "light",
-        accent: "#06b6d4",
-        sound: "chime",
-        autostart: false
-      };
-
-      // ---------- resolve initial settings: URL params first ----------
-      const params = new URLSearchParams(window.location.search);
-
-      const fromUrl = {
-        duration: clampInt(params.get("duration"), 1, 180, DEFAULTS.duration),
-        theme: VALID_THEMES.includes((params.get("theme") || "").toLowerCase())
-          ? params.get("theme").toLowerCase() : DEFAULTS.theme,
-        accent: HEX_RE.test(params.get("accent") || "")
-          ? params.get("accent") : DEFAULTS.accent,
-        sound: VALID_SOUNDS.includes((params.get("sound") || "").toLowerCase())
-          ? params.get("sound").toLowerCase() : DEFAULTS.sound,
-        autostart: (params.get("autostart") || "false").toLowerCase() === "true"
-      };
-
-      // ---------- then localStorage overrides (if the user has saved settings before) ----------
-      let settings = { ...fromUrl };
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-        if (saved && typeof saved === "object") {
-          settings = {
-            duration: clampInt(saved.duration, 1, 180, fromUrl.duration),
-            theme: VALID_THEMES.includes(saved.theme) ? saved.theme : fromUrl.theme,
-            accent: HEX_RE.test(saved.accent || "") ? saved.accent : fromUrl.accent,
-            sound: VALID_SOUNDS.includes(saved.sound) ? saved.sound : fromUrl.sound,
-            autostart: typeof saved.autostart === "boolean" ? saved.autostart : fromUrl.autostart
-          };
-        }
-      } catch (_) { /* corrupted storage — ignore, fall back to URL/defaults */ }
-
-      const persistSettings = () => {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); }
-        catch (_) { /* storage unavailable — silently ignore */ }
-      };
-
-      // ---------- DOM refs ----------
-      const $time   = document.getElementById("time");
-      const $mode   = document.getElementById("modeLabel");
-      const $ring   = document.getElementById("ring");
-      const $play   = document.getElementById("playBtn");
-      const $reset  = document.getElementById("resetBtn");
-      const $tabs   = Array.from(document.querySelectorAll(".tab"));
-
-      const $gearBtn        = document.getElementById("gearBtn");
-      const $settingsPanel  = document.getElementById("settingsPanel");
-      const $closeSettings  = document.getElementById("closeSettingsBtn");
-      const $durationInput  = document.getElementById("durationInput");
-      const $durationVal    = document.getElementById("durationVal");
-      const $themeGroup     = document.getElementById("themeGroup");
-      const $accentInput    = document.getElementById("accentInput");
-      const $swatchGroup    = document.getElementById("swatchGroup");
-      const $soundInput     = document.getElementById("soundInput");
-      const $testSoundBtn   = document.getElementById("testSoundBtn");
-      const $autostartGroup = document.getElementById("autostartGroup");
-      const $resetDefaults  = document.getElementById("resetDefaultsBtn");
-      const $saveSettings   = document.getElementById("saveSettingsBtn");
-
-      const ICON_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>';
-      const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7"  y="5" width="3.2" height="14" rx="1"/><rect x="13.8" y="5" width="3.2" height="14" rx="1"/></svg>';
-
-      // ---------- modes (derived from settings.duration; breaks scale proportionally) ----------
-      const RATIO_SHORT = 5 / 25;
-      const RATIO_LONG  = 15 / 25;
-      let MODES = {};
-      const rebuildModes = () => {
-        MODES = {
-          pomodoro: { seconds: settings.duration * 60, label: "work", color: settings.accent },
-          short:    { seconds: Math.max(60, Math.round(settings.duration * RATIO_SHORT) * 60), label: "short break", color: "#22c55e" },
-          long:     { seconds: Math.max(60, Math.round(settings.duration * RATIO_LONG) * 60),  label: "long break",  color: "#a855f7" }
-        };
-      };
-      rebuildModes();
-
-      let state = "idle";           // 'idle' | 'running' | 'paused'
-      let mode  = localStorage.getItem(LS_MODE_KEY) || "pomodoro";
-      if (!MODES[mode]) mode = "pomodoro";
-      let remaining = MODES[mode].seconds;
-      let tickId = null;
-      let endsAt = 0;
-
-      // ---------- pomodoro cycle counter ----------
-      // Classic technique: after each of the first 3 completed work
-      // sessions, take a short break; after the 4th, take a long break
-      // and reset the counter. Persisted so a page reload mid-cycle
-      // doesn't silently restart the count at 1.
-      const LS_CYCLE_KEY = "swiftry-pomodoro-cycle";
-      let cycleCount = clampInt(localStorage.getItem(LS_CYCLE_KEY), 0, 3, 0);
-      const persistCycle = () => {
-        try { localStorage.setItem(LS_CYCLE_KEY, String(cycleCount)); }
-        catch (_) { /* storage unavailable — silently ignore */ }
-      };
-
-      // ---------- helpers ----------
-      const fmt = (s) => {
-        s = Math.max(0, Math.floor(s));
-        const m = Math.floor(s / 60);
-        const r = s % 60;
-        return String(m).padStart(2, "0") + ":" + String(r).padStart(2, "0");
-      };
-      const setAccent = (hex) => {
-        document.documentElement.style.setProperty("--accent", hex);
-        $ring.style.setProperty("--accent", hex);
-      };
-      const render = () => {
-        $time.textContent = fmt(remaining);
-        $mode.textContent = MODES[mode].label;
-        const total = MODES[mode].seconds;
-        const p = total > 0 ? 1 - (remaining / total) : 1;
-        $ring.style.setProperty("--p", p.toFixed(4));
-        $ring.classList.toggle("running", state === "running");
-      };
-      const setPlayIcon = (running) => {
-        $play.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
-        $play.setAttribute("aria-label", running ? "Pause" : "Start");
-      };
-      const applyTheme = (theme) => {
-        VALID_THEMES.forEach(t => document.body.classList.remove("theme-" + t));
-        document.body.classList.add("theme-" + theme);
-      };
-
-      // ---------- mode switching ----------
-      const switchMode = (next, { resetTimer = true } = {}) => {
-        if (!MODES[next]) return;
-        mode = next;
-        localStorage.setItem(LS_MODE_KEY, mode);
-        if (resetTimer) {
-          stopTick();
-          stopRing();
-          state = "idle";
-          remaining = MODES[mode].seconds;
-          setPlayIcon(false);
-        }
-        setAccent(mode === "pomodoro" ? settings.accent : MODES[mode].color);
-        $tabs.forEach(t => t.setAttribute(
-          "aria-selected",
-          String(t.dataset.mode === mode)
-        ));
-        render();
-      };
-
-      // ---------- tick loop (drift-free via endsAt) ----------
-      const startTick = () => {
-        stopTick();
-        endsAt = Date.now() + remaining * 1000;
-        state = "running";
-        setPlayIcon(true);
-        render();
-        tickId = setInterval(() => {
-          const left = Math.round((endsAt - Date.now()) / 1000);
-          if (left <= 0) {
-            remaining = 0;
-            stopTick();
-            onComplete();
-            render();
-            return;
-          }
-          remaining = left;
-          render();
-        }, 250);
-      };
-      const stopTick = () => {
-        if (tickId) { clearInterval(tickId); tickId = null; }
-      };
-
-      // ---------- finish: auto-advance to the next mode in the cycle ----------
-      // pomodoro -> short break (x3) -> pomodoro -> ... -> long break -> pomodoro -> (counter resets)
-      const nextModeAfter = (finishedMode) => {
-        if (finishedMode === "pomodoro") {
-          cycleCount += 1;
-          if (cycleCount >= 4) {
-            cycleCount = 0;
-            persistCycle();
-            return "long";
-          }
-          persistCycle();
-          return "short";
-        }
-        // After any break (short or long), always return to work.
-        return "pomodoro";
-      };
-
-      const onComplete = () => {
-        const finishedMode = mode;
-        state = "idle";
-        setPlayIcon(false);
-        render();
-        playSound(settings.sound);
-
-        const next = nextModeAfter(finishedMode);
-        // Switch to the next mode (resets remaining to its full duration)
-        // and immediately start it — the alarm sound above already played,
-        // so this is a clean transition into the next session.
-        switchMode(next, { resetTimer: true });
-        stopRing();
-        startTick();
-      };
-
-      // ---------- audio: three distinct generated sounds + off ----------
-      let audioCtx   = null;
-      let ringTimer  = null;
-
-      const getCtx = () => {
-        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") audioCtx.resume();
-        return audioCtx;
-      };
-
-      const tone = (ctx, freq, startAt, dur, type, peakGain) => {
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = type;
-        o.frequency.setValueAtTime(freq, startAt);
-        g.gain.setValueAtTime(0.0001, startAt);
-        g.gain.exponentialRampToValueAtTime(peakGain, startAt + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
-        o.connect(g).connect(ctx.destination);
-        o.start(startAt);
-        o.stop(startAt + dur + 0.02);
-      };
-
-      const burstChime = (ctx) => {
-        const now = ctx.currentTime;
-        tone(ctx, 784, now,         0.5, "sine", 0.3);
-        tone(ctx, 1046, now + 0.18, 0.6, "sine", 0.28);
-      };
-      const burstBell = (ctx) => {
-        const now = ctx.currentTime;
-        tone(ctx, 1318, now, 0.9, "triangle", 0.35);
-        tone(ctx, 2637, now, 0.5, "sine",     0.08);
-      };
-      const burstAlarm = (ctx) => {
-        const now = ctx.currentTime;
-        [0, 0.28, 0.56].forEach((offset) => {
-          tone(ctx, 988, now + offset, 0.22, "sine", 0.45);
-        });
-      };
-
-      const SOUND_BURSTS = {
-        chime: { fn: burstChime, interval: 2200 },
-        bell:  { fn: burstBell,  interval: 1800 },
-        alarm: { fn: burstAlarm, interval: 1400 }
-      };
-
-      // soundName lets the "Test" button preview a sound without it being saved yet
-      const playSound = (soundName, { loop = true } = {}) => {
-        stopRing();
-        if (soundName === "off") return;
-        try {
-          const ctx = getCtx();
-          const entry = SOUND_BURSTS[soundName];
-          if (!entry) return;
-          $ring.classList.add("ringing");
-          entry.fn(ctx);
-          if (loop) ringTimer = setInterval(() => entry.fn(ctx), entry.interval);
-          else setTimeout(() => $ring.classList.remove("ringing"), 900);
-        } catch (_) { /* audio blocked — silently ignore */ }
-      };
-
-      const stopRing = () => {
-        if (ringTimer) { clearInterval(ringTimer); ringTimer = null; }
-        $ring.classList.remove("ringing");
-      };
-
-      // ---------- timer controls ----------
-      $play.addEventListener("click", () => {
-        if (state === "running") {
-          stopTick();
-          state = "paused";
-          setPlayIcon(false);
-          render();
-        } else {
-          stopRing();
-          startTick();
-        }
-      });
-
-      $reset.addEventListener("click", () => {
-        stopTick();
-        stopRing();
-        state = "idle";
-        remaining = MODES[mode].seconds;
-        setPlayIcon(false);
-        render();
-      });
-
-      $tabs.forEach(t => t.addEventListener("click", () => switchMode(t.dataset.mode)));
-
-      document.addEventListener("keydown", (e) => {
-        if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-        if ($settingsPanel.classList.contains("open")) return;
-        if (e.code === "Space") { e.preventDefault(); $play.click(); }
-        else if (e.key === "r" || e.key === "R") { $reset.click(); }
-      });
-
-      // =====================================================================
-      // Settings panel wiring
-      // =====================================================================
-      let draft = { ...settings }; // edits live here until "Done" is pressed
-
-      const syncPanelUI = () => {
-        $durationInput.value = draft.duration;
-        $durationVal.textContent = draft.duration + " min";
-
-        Array.from($themeGroup.children).forEach(btn =>
-          btn.classList.toggle("active", btn.dataset.theme === draft.theme));
-
-        $accentInput.value = draft.accent;
-        Array.from($swatchGroup.children).forEach(sw =>
-          sw.classList.toggle("active", sw.dataset.color.toLowerCase() === draft.accent.toLowerCase()));
-
-        $soundInput.value = draft.sound;
-
-        Array.from($autostartGroup.children).forEach(btn =>
-          btn.classList.toggle("active", (btn.dataset.autostart === "true") === draft.autostart));
-      };
-
-      const openPanel = () => {
-        draft = { ...settings };
-        syncPanelUI();
-        $settingsPanel.classList.add("open");
-        $gearBtn.classList.add("open");
-      };
-      const closePanel = () => {
-        $settingsPanel.classList.remove("open");
-        $gearBtn.classList.remove("open");
-        stopRing(); // in case "Test sound" left it ringing
-      };
-
-      $gearBtn.addEventListener("click", () => {
-        if ($settingsPanel.classList.contains("open")) closePanel();
-        else openPanel();
-      });
-      $closeSettings.addEventListener("click", closePanel);
-
-      $durationInput.addEventListener("input", () => {
-        draft.duration = clampInt($durationInput.value, 1, 120, DEFAULTS.duration);
-        $durationVal.textContent = draft.duration + " min";
-      });
-
-      $themeGroup.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-theme]");
-        if (!btn) return;
-        draft.theme = btn.dataset.theme;
-        syncPanelUI();
-        applyTheme(draft.theme); // live preview while panel is open
-      });
-
-      $accentInput.addEventListener("input", () => {
-        draft.accent = $accentInput.value;
-        syncPanelUI();
-        setAccent(draft.accent); // live preview
-      });
-      $swatchGroup.addEventListener("click", (e) => {
-        const sw = e.target.closest("button[data-color]");
-        if (!sw) return;
-        draft.accent = sw.dataset.color;
-        syncPanelUI();
-        setAccent(draft.accent);
-      });
-
-      $soundInput.addEventListener("change", () => { draft.sound = $soundInput.value; });
-      $testSoundBtn.addEventListener("click", () => playSound(draft.sound, { loop: false }));
-
-      $autostartGroup.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-autostart]");
-        if (!btn) return;
-        draft.autostart = btn.dataset.autostart === "true";
-        syncPanelUI();
-      });
-
-      $resetDefaults.addEventListener("click", () => {
-        draft = { ...DEFAULTS };
-        syncPanelUI();
-        applyTheme(draft.theme);
-        setAccent(draft.accent);
-      });
-
-      $saveSettings.addEventListener("click", () => {
-        settings = { ...draft };
-        persistSettings();
-        rebuildModes();
-        applyTheme(settings.theme);
-        // Re-apply current mode's timer with the new durations, restarting
-        // at "idle" for whichever mode is active so the new duration takes
-        // effect immediately rather than only on the next manual switch.
-        stopTick();
-        stopRing();
-        state = "idle";
-        remaining = MODES[mode].seconds;
-        setPlayIcon(false);
-        setAccent(mode === "pomodoro" ? settings.accent : MODES[mode].color);
-        render();
-        closePanel();
-      });
-
-      // Close panel on outside click (clicking the dimmed page area, not the card)
-      document.addEventListener("click", (e) => {
-        if (!$settingsPanel.classList.contains("open")) return;
-        if (e.target === $gearBtn || $gearBtn.contains(e.target)) return;
-        if ($settingsPanel.contains(e.target)) return;
-        closePanel();
-      });
-
-      // ---------- boot ----------
-      applyTheme(settings.theme);
-      setAccent(settings.accent);
-      $tabs.forEach(t => t.setAttribute(
-        "aria-selected",
-        String(t.dataset.mode === mode)
-      ));
-      setPlayIcon(false);
-      render();
-
-      if (settings.autostart) {
-        // Browsers block AudioContext until a user gesture, so the very
-        // first auto-started session may complete silently if the user
-        // never interacted with the page — this is expected/unavoidable.
-        startTick();
+    const themes = {
+      sunset: {
+        bg1: "#251025", bg2: "#8f2d56", bg3: "#f77f3f", sun: "#ffd166", coral: "#ff6b6b", aqua: "#55f3d2", buttonText: "#2a1024"
+      },
+      champagne: {
+        bg1: "#4a1d2f", bg2: "#b4532a", bg3: "#f6c177", sun: "#fff0bd", coral: "#fb7185", aqua: "#99f6e4", buttonText: "#34151f"
+      },
+      hibiscus: {
+        bg1: "#2a1024", bg2: "#be123c", bg3: "#fb7185", sun: "#fed7aa", coral: "#ff4d6d", aqua: "#67e8f9", buttonText: "#2a1024"
+      },
+      lagoon: {
+        bg1: "#083344", bg2: "#0f766e", bg3: "#f59e0b", sun: "#fde68a", coral: "#fb7185", aqua: "#5eead4", buttonText: "#083344"
+      },
+      noir: {
+        bg1: "#120812", bg2: "#3b102f", bg3: "#9a3412", sun: "#facc15", coral: "#f97316", aqua: "#2dd4bf", buttonText: "#160916"
       }
-    })();
+    };
+
+    const vibes = [
+      "Soft island focus, calm energy, timeless elegance.",
+      "Golden hour energy for your Notion dashboard.",
+      "A smooth retro Zouk mood with a clean modern finish.",
+      "Soft sunset colors, clear mind, Caribbean inspiration.",
+      "Elegant planning with a calm island atmosphere.",
+      "Press play and let the day feel lighter.",
+      "Tropical warmth, minimal layout, premium feeling.",
+      "Where modern focus meets old-school Zouk nostalgia."
+    ];
+
+    const $ = (id) => document.getElementById(id);
+
+    function setVar(name, value) {
+      if (value) document.documentElement.style.setProperty(name, value);
+    }
+
+    function applyTheme(themeName) {
+      const theme = themes[themeName] || themes.sunset;
+      setVar("--bg-1", theme.bg1);
+      setVar("--bg-2", theme.bg2);
+      setVar("--bg-3", theme.bg3);
+      setVar("--sun", theme.sun);
+      setVar("--coral", theme.coral);
+      setVar("--aqua", theme.aqua);
+      setVar("--button-text", theme.buttonText);
+    }
+
+    function setText(id, fallback, limit = 100) {
+      const value = params.get(id);
+      $(id).textContent = value ? value.slice(0, limit) : fallback;
+    }
+
+    function normalizeMediaUrl(url) {
+      if (!url) return defaultPlaylist;
+
+      // Keep media links as normal external links.
+      // This avoids black screens caused by loading YouTube/SoundCloud inside nested embeds.
+      try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.replace("www.", "");
+
+        // Clean YouTube share links by removing tracking parameters.
+        if (host === "youtu.be") {
+          const videoId = parsed.pathname.replace("/", "").split("?")[0];
+          return videoId ? `https://youtu.be/${videoId}` : url;
+        }
+
+        if (host === "youtube.com" || host === "m.youtube.com") {
+          const videoId = parsed.searchParams.get("v") || "";
+          return videoId ? `https://www.youtube.com/watch?v=${videoId}` : url;
+        }
+      } catch (error) {
+        return defaultPlaylist;
+      }
+
+      return url;
+    }
+
+    function setConfig() {
+      const theme = params.get("theme") || "sunset";
+      applyTheme(theme);
+
+      setText("title", "Zouk Vibes", 60);
+      setText("subtitle", "A premium Zouk-inspired widget for Notion — sunset colors, elegant island art and a customizable music link with a demo mix.", 150);
+      setText("eyebrow", "Warm Island Signal", 40);
+      setText("status", "Demo link ready", 40);
+
+      const emoji = params.get("emoji");
+      if (emoji) $("emoji").textContent = emoji.slice(0, 4);
+
+      const customQuote = params.get("quote");
+      if (customQuote) {
+        $("quote").textContent = customQuote.slice(0, 130);
+      } else {
+        const day = Math.floor(Date.now() / 86400000);
+        $("quote").textContent = vibes[day % vibes.length];
+      }
+
+      const playlist = params.get("playlist");
+      const button = params.get("button");
+      const playlistButton = $("playlistButton");
+      const mediaUrl = playlist && /^https?:\/\//i.test(playlist) ? normalizeMediaUrl(playlist) : defaultPlaylist;
+
+      playlistButton.href = "#";
+      playlistButton.dataset.url = mediaUrl;
+      playlistButton.textContent = button ? button.slice(0, 40) : (playlist ? "🔗 Show music link" : "🔗 Show demo link");
+      playlistButton.target = "_self";
+
+      const compact = params.get("compact");
+      if (compact === "true" || compact === "1") document.body.classList.add("compact");
+    }
+
+    function updateClock() {
+      const now = new Date();
+      $("time").textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      $("date").textContent = now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+    }
+
+
+
+    function showManualLink(url) {
+      const panel = $("linkPanel");
+      const input = $("linkInput");
+      input.value = url;
+      panel.classList.remove("hidden");
+      $("status").textContent = "Select the link below";
+
+      setTimeout(() => {
+        input.focus();
+        input.select();
+        input.setSelectionRange(0, input.value.length);
+      }, 50);
+    }
+
+    $("playlistButton").addEventListener("click", async (event) => {
+      // Clipboard and popups can be blocked inside Notion/preview iframes.
+      // So we always show a manual copy field that the user can select.
+      event.preventDefault();
+      const url = $("playlistButton").dataset.url || defaultPlaylist;
+      showManualLink(url);
+
+      // Try automatic copy as a bonus. If it fails, the manual field is already visible.
+      try {
+        await navigator.clipboard.writeText(url);
+        $("playlistButton").textContent = "✓ Link ready";
+        $("status").textContent = "Link selected below";
+      } catch (error) {
+        $("playlistButton").textContent = "↧ Link shown below";
+      }
+    });
+
+    $("selectLinkButton").addEventListener("click", () => {
+      const input = $("linkInput");
+      input.focus();
+      input.select();
+      input.setSelectionRange(0, input.value.length);
+      $("status").textContent = "Now copy with Ctrl/Cmd + C";
+    });
+
+    $("closeLinkButton").addEventListener("click", () => {
+      $("linkPanel").classList.add("hidden");
+      $("playlistButton").textContent = params.get("button") || (params.get("playlist") ? "🔗 Show music link" : "🔗 Show demo link");
+      $("status").textContent = params.get("status") || "Demo link ready";
+    });
+
+    $("shuffleButton").addEventListener("click", () => {
+      const current = $("quote").textContent;
+      const pool = vibes.filter((vibe) => vibe !== current);
+      $("quote").textContent = pool[Math.floor(Math.random() * pool.length)] || vibes[0];
+    });
+
+    setConfig();
+    updateClock();
+    setInterval(updateClock, 30000);
   </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a12e9e1a7c555910',t:'MTc4MjY2OTkwNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
